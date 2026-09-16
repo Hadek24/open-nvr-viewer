@@ -1,24 +1,26 @@
-# NVR Viewer
+# Open NVR Viewer
 
-A lightweight Linux GUI application for viewing Hikvision NVR camera streams using RTSP.
+A lightweight Linux oriented GUI application in Python for viewing NVR camera streams using RTSP.
 
-The project was created as a personal lab project to replace a heavier video surveillance client with a simpler application focused on the features actually needed for everyday monitoring.
+## What does it solve?
+
+The project began as a personal laboratory initiative to replace a complex video surveillance client with a simpler application, focusing on the features actually needed for daily monitoring. Additionally, the original application lacked a version compatible with Linux.
 
 ## Features
 
-Current version — v1.1.0
+Current version — v1.1.1
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
-* RTSP streams from Hikvision NVR
+* RTSP streams from IP cameras / NVR systems
 * Configurable number of camera channels
 * 2x2, 3x3 and 4x4 grid layouts
 * Individual camera/channel selection
-* Audio mute/unmute per camera
 * Substream for multi-camera view
 * Mainstream when maximizing a camera
 * Persistent grid configuration using JSON
 * Double-click to maximize/restore a camera
+* The ability to reconnect to the cameras.
 
 ## Requirements
 
@@ -26,21 +28,39 @@ Current version — v1.1.0
 * Python 3
 * PyQt6
 * ffmpeg installed and available in the PATH
-* A Hikvision-compatible NVR/camera system providing RTSP streams
+* A compatible NVR/camera system providing RTSP streams
 
 ## Installation
 
 Clone the repository:
 ```bash
-git clone https://github.com/Hadek24/NVR_Viewer.git
-cd NVR_Viewer
+git clone https://github.com/Hadek24/open-nvr-viewer.git
+cd open-nvr-viewer
 ```
 
-Install the required system packages:
+### Install the required system packages:
+
 ```bash
 sudo apt update
 sudo apt install ffmpeg python3-pyqt6
 ```
+
+## How to use it?
+
+1. Ensure configuration parameters are set in `config.json` (NVR IP address, credentials, ports, and total channels).
+2. Launch the application:
+
+```bash
+python3 nvr_viewer.py
+```
+
+**Usage & Features:**
+
+* Configurable Grid Layouts: Choose between 2x2, 3x3, and 4x4 viewing grids from the top bar.
+* Dynamic Camera Assignment: Assign any available camera (supports up to 16 channels) or leave slots empty using individual dropdown selectors.
+* Optimized Bandwidth (Sub-stream): By default, grid slots load the low-resolution sub-stream to minimize CPU and network overhead.
+* Full-Screen Focus (Main-stream): Double-clicking any camera widget isolates that feed and automatically elevates it to the high-resolution main-stream. Double-click again to return to the grid.
+* Manual Reconnection: If a stream disconnects or fails, use the selector or action buttons; connection retries require user initiation by design.
 
 ## Configuration
 
@@ -76,21 +96,9 @@ Example (`config.json`):
 
 > ⚠️ **Important:** `config.json` contains credentials and is intentionally excluded from the Git repository. Do not commit real passwords or other sensitive information.
 
-## Running
-
-Start the application with:
-```bash
-python3 nvr_viewer.py
-```
-
-- The application connects directly to the NVR using RTSP.
-- Select the grid size from the top dropdown menu.
-- Select which camera goes in each square using its specific selector.
-- Double-click a camera to maximize it (switches to main stream); double-click again to return to the grid (reverts to sub-stream).
-
 ## RTSP
 
-The application uses Hikvision RTSP channel URLs following the standard channel/stream structure:
+The application uses RTSP channel URLs following the standard channel/stream structure:
 ```text
 rtsp://USER:PASSWORD@NVR_IP:PORT/Streaming/Channels/CHANNEL0STREAM
 ```
@@ -101,10 +109,12 @@ For example:
 
 The multi-camera grid uses the substream to reduce resource usage, while the maximized camera uses the mainstream.
 
+**Note:** Currently, it only supports this type of format; other formats will be added later in the project.
+
 ## Project Structure
 
 ```text
-nvr-viewer/
+open-nvr-viewer/
 ├── nvr_viewer.py
 ├── config.example.json
 ├── config.json          # Local only - not tracked by Git
@@ -117,6 +127,12 @@ nvr-viewer/
 This is an actively developed personal project.
 The current priority is stability and reliability before adding additional features.
 
+## Known limitations
+
+* Currently supports only the /Streaming/Channels/ RTSP URL structure; other NVR URL schemes are not yet implemented.
+
 ## License
 
-This project is provided for educational and personal use.
+Distributed under the MIT license.
+
+Note: The use of the software is the operator's responsibility. The author assumes no liability for misuse or failures in production environments.

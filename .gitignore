@@ -1,18 +1,51 @@
-# Configuración local (¡Muy importante para proteger tu contraseña!)
+# ===============================
+# Temporary files
+# ===============================
+*.bak
+*.orig
+*~
+*.tmp
+*.swp
+
+# ===============================
+# Logs
+# ===============================
+*.log
+
+# ===============================
+# Configuración local 
+# ===============================
 config.json
 
+# ===============================
 # Archivos temporales de Python
+# ===============================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Archivos de configuración de entornos virtuales (si usás uno)
+# ===============================
+# Archivos venv
+# ===============================
 .venv/
 venv/
 env/
 
-# Archivos de configuración de Geany u otros editores
+# ===============================
+# Archivos de editores
+# ===============================
 *.geany
 .idea/
 .vscode/
+
+# ===============================
+# Backups
+# ===============================
+*.bkp
+
+# ===============================
+# OS generated files
+# ===============================
+.DS_Store
+Thumbs.db
