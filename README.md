@@ -8,7 +8,7 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v1.1.1
+Current version — v1.2.0
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
@@ -21,6 +21,10 @@ Current version — v1.1.1
 * Persistent grid configuration using JSON
 * Double-click to maximize/restore a camera
 * The ability to reconnect to the cameras.
+
+### v1.2.0
+* Refactored the application into separate Python modules.
+* Preserved the functionality of v1.1.1.
 
 ## Requirements
 
@@ -51,7 +55,7 @@ sudo apt install ffmpeg python3-pyqt6
 2. Launch the application:
 
 ```bash
-python3 nvr_viewer.py
+python3 main.py
 ```
 
 **Usage & Features:**
@@ -115,9 +119,16 @@ The multi-camera grid uses the substream to reduce resource usage, while the max
 
 ```text
 open-nvr-viewer/
-├── nvr_viewer.py
+├── main.py
 ├── config.example.json
 ├── config.json          # Local only - not tracked by Git
+├── src/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── camera_widget.py
+│   ├── main_window.py
+│   ├── video_frame.py
+│   └── video_thread.py
 ├── .gitignore
 └── README.md
 ```
