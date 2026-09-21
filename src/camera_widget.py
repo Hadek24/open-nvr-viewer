@@ -114,8 +114,8 @@ class CameraWidget(QWidget):
             if self.current_channel != "Vacío":
                 self.play_stream("2")
             else:
-                self.video_frame.set_image(None)
-                self.status_label.setText("")
+                self.status_label.setStyleSheet("color: red; font-weight: bold;")
+                self.status_label.setText("Desconectado")
             self.parent_grid.save_current_mapping()
 
     def toggle_audio(self):

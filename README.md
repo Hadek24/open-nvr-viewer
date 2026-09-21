@@ -8,13 +8,13 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v1.2.0
+Current version — v1.2.1
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
 * RTSP streams from IP cameras / NVR systems
 * Configurable number of camera channels
-* 2x2, 3x3 and 4x4 grid layouts
+* 1x1, 2x2, 3x3 and 4x4 grid layouts
 * Individual camera/channel selection
 * Substream for multi-camera view
 * Mainstream when maximizing a camera
@@ -22,9 +22,20 @@ Current version — v1.2.0
 * Double-click to maximize/restore a camera
 * The ability to reconnect to the cameras.
 
-### v1.2.0
-* Refactored the application into separate Python modules.
-* Preserved the functionality of v1.1.1.
+### v1.2.1
+* Fixes / Stability
+
+* Protection for maximized_cam.
+* Grid selector disabled while a camera is maximized.
+* Empty → Disconnected.
+
+* Functionality
+
+* New 1x1 grid.
+* Independent mapping for each grid size.
+* Persistence of each mapping.
+* Persistence of LAST_GRID_SIZE.
+* Correct recovery after restarting the application.
 
 ## Requirements
 
@@ -60,7 +71,7 @@ python3 main.py
 
 **Usage & Features:**
 
-* Configurable Grid Layouts: Choose between 2x2, 3x3, and 4x4 viewing grids from the top bar.
+* Configurable Grid Layouts: Choose between 1x1, 2x2, 3x3, and 4x4 viewing grids from the top bar.
 * Dynamic Camera Assignment: Assign any available camera (supports up to 16 channels) or leave slots empty using individual dropdown selectors.
 * Optimized Bandwidth (Sub-stream): By default, grid slots load the low-resolution sub-stream to minimize CPU and network overhead.
 * Full-Screen Focus (Main-stream): Double-clicking any camera widget isolates that feed and automatically elevates it to the high-resolution main-stream. Double-click again to return to the grid.
@@ -78,24 +89,20 @@ cp config.example.json config.json
 Example (`config.json`):
 ```json
 {
-    "NVR_USER": "your_username",
+    "NVR_USER": "your_user",
     "NVR_PASS": "your_password",
     "NVR_IP": "192.168.1.100",
     "NVR_PORT": "554",
     "TOTAL_CHANNELS": 16,
-    "LAST_GRID_SIZE": 3,
-    "GRID_MAPPING": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9"
-    ]
+    "LAST_GRID_SIZE": 2,
+    "GRID_MAPPINGS": {
+        "1": ["1"],
+        "2": ["1", "2", "3", "4"],
+        "3": ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        "4": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
+    }
 }
+
 ```
 
 > ⚠️ **Important:** `config.json` contains credentials and is intentionally excluded from the Git repository. Do not commit real passwords or other sensitive information.
