@@ -1,7 +1,23 @@
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QComboBox, QLabel
 from src.video_thread import FFmpegThread
 from src.video_frame import VideoFrame
+
+class HoverAwareComboBox(QComboBox):
+    def __init__(self, owner, parent=None):
+        super().__init__(parent)
+        self.owner = owner
+
+    def showPopup(self):
+        self.owner.popup_open = True
+        super().showPopup()
+
+    def hidePopup(self):
+        super().hidePopup()
+        self.owner.popup_open = False
+        if not self.owner.rect().contains(
+            self.owner.mapFromGlobal(self.owner.cursor().pos())):
+            self.owner.controls_widget.hide()
 
 class CameraWidget(QWidget):
     def __init__(self, slot_index, initial_channel, parent_grid, config):
@@ -12,6 +28,7 @@ class CameraWidget(QWidget):
         self.config = config
         self.ffmpeg_thread = None
         self.is_muted = True
+        self.popup_open = False
         self.connection_timer = QTimer(self)
         self.connection_timer.setSingleShot(True)
         self.connection_timer.timeout.connect(self.handle_connection_timeout)
@@ -21,11 +38,18 @@ class CameraWidget(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.video_container = QWidget()
         self.video_frame = VideoFrame(self)
-        layout.addWidget(self.video_frame)
-        controls_layout = QHBoxLayout()
-        self.cam_selector = QComboBox()
+        video_layout = QGridLayout(self.video_container)
+        video_layout.setContentsMargins(0, 0, 0, 0)
+        video_layout.addWidget(self.video_frame, 0, 0)
+        layout.addWidget(self.video_container)
+        self.controls_widget = QWidget(self.video_container)
+        self.controls_widget.setGeometry(0, 0, self.video_container.width(), 40)
+        self.controls_widget.hide()
+        controls_layout = QHBoxLayout(self.controls_widget)
+        self.cam_selector = HoverAwareComboBox(self)
         self.cam_selector.addItem("Vacío")
         for ch in range(1, self.config["TOTAL_CHANNELS"] + 1):
             self.cam_selector.addItem(f"Cam {ch}", str(ch))
@@ -51,7 +75,6 @@ class CameraWidget(QWidget):
         self.status_label.setStyleSheet("color: red; font-weight: bold;")
         controls_layout.addWidget(self.status_label)
         controls_layout.addStretch()
-        layout.addLayout(controls_layout)
         self.setLayout(layout)
 
     def play_stream(self, stream_type):
@@ -114,8 +137,8 @@ class CameraWidget(QWidget):
             if self.current_channel != "Vacío":
                 self.play_stream("2")
             else:
-                self.video_frame.set_image(None)
-                self.status_label.setText("")
+                self.status_label.setStyleSheet("color: red; font-weight: bold;")
+                self.status_label.setText("Desconectado")
             self.parent_grid.save_current_mapping()
 
     def toggle_audio(self):
@@ -134,3 +157,18 @@ class CameraWidget(QWidget):
         self.stop_stream()
         self.setParent(None)
         self.deleteLater()
+    
+    def enterEvent(self, event):
+        self.controls_widget.show()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if not self.popup_open:
+            self.controls_widget.hide()
+        super().leaveEvent(event)
+
+    def resizeEvent(self, event):
+        self.controls_widget.setGeometry( 0,
+        self.video_container.height() - 40,
+        self.video_container.width(), 40)
+        super().resizeEvent(event)

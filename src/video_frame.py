@@ -19,7 +19,8 @@ class VideoFrame(QWidget):
         if self.image is None:
             return
         pixmap = QPixmap.fromImage(self.image)
-        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        #pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
         x = (self.width() - pixmap.width()) // 2
         y = (self.height() - pixmap.height()) // 2
         painter.drawPixmap(x, y, pixmap)
