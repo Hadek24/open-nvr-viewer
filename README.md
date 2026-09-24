@@ -8,7 +8,7 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v1.2.1
+Current version — v1.3.0
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
@@ -21,21 +21,10 @@ Current version — v1.2.1
 * Persistent grid configuration using JSON
 * Double-click to maximize/restore a camera
 * The ability to reconnect to the cameras.
+* Graphical improvement of the application.
 
-### v1.2.1
-* Fixes / Stability
-
-* Protection for maximized_cam.
-* Grid selector disabled while a camera is maximized.
-* Empty → Disconnected.
-
-* Functionality
-
-* New 1x1 grid.
-* Independent mapping for each grid size.
-* Persistence of each mapping.
-* Persistence of LAST_GRID_SIZE.
-* Correct recovery after restarting the application.
+### v1.3.0
+* Graphical improvement of the application.
 
 ## Requirements
 
@@ -129,11 +118,14 @@ open-nvr-viewer/
 ├── main.py
 ├── config.example.json
 ├── config.json          # Local only - not tracked by Git
+├── LICENSE 
 ├── src/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── camera_widget.py
 │   ├── main_window.py
+│   ├── styles.py
+│   ├── title_bar.py
 │   ├── video_frame.py
 │   └── video_thread.py
 ├── .gitignore

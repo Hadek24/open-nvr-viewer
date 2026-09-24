@@ -1,11 +1,15 @@
 from src.config import load_config, save_config
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QGridLayout
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QGridLayout, QTabWidget, QLabel, QPushButton, QSizeGrip
+from PyQt6.QtGui import QPainter, QLinearGradient, QColor
 from src.camera_widget import CameraWidget
+from src.styles import main_windows_style
+from src.title_bar import TitleBar
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Open NVR Viewer")
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.resize(1280, 720)
         self.config = load_config()
         self.cameras = []
@@ -13,18 +17,40 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        
+        self.title_bar = TitleBar(self)
+        self.main_layout.addWidget(self.title_bar)
+        self.main_layout.addSpacing(6)
+        
+        self.tabs = QTabWidget()
+        self.main_layout.addWidget(self.tabs)
+        self.main_view = QWidget() #Pestaña "Main View"
+        self.tabs.addTab(self.main_view, "Main View")
+        self.main_view_layout = QVBoxLayout(self.main_view)
+        self.main_view_layout.setContentsMargins(6, 6, 6, 6)
+        self.playback_view = QWidget() #Pestaña "Playback"
+        self.tabs.addTab(self.playback_view, "Playback")
+        self.playback_layout = QVBoxLayout(self.playback_view)
+        self.configuration_view = QWidget() #Pestaña "Configuration"
+        self.tabs.addTab(self.configuration_view, "Configuration")
+        self.configuration_layout = QVBoxLayout(self.configuration_view)
         self.top_bar = QHBoxLayout()
         self.grid_selector = QComboBox()
+        self.grid_selector.setObjectName("grid_selector")
         self.grid_selector.addItems(["Grilla 1x1", "Grilla 2x2", "Grilla 3x3", "Grilla 4x4"])
         initial_index = self.config.get("LAST_GRID_SIZE", 3) - 1
         self.grid_selector.setCurrentIndex(max(0, min(initial_index, 3)))
         self.grid_selector.currentIndexChanged.connect(self.change_grid_size)
         self.top_bar.addWidget(self.grid_selector)
         self.top_bar.addStretch()
-        self.main_layout.addLayout(self.top_bar)
+        self.main_view_layout.addLayout(self.top_bar) #Selector de grilla
         self.grid_layout = QGridLayout()
-        self.main_layout.addLayout(self.grid_layout)
+        self.grid_layout.setSpacing(2)
+        self.main_view_layout.addLayout(self.grid_layout) #Camaras
         self.build_grid(self.config.get("LAST_GRID_SIZE", 3))
+        self.setStyleSheet(main_windows_style) #Encargando de insertar estilos a la APP
 
     def save_current_mapping(self):
         current_size = self.grid_selector.currentText()
@@ -89,3 +115,6 @@ class MainWindow(QMainWindow):
         for cam in self.cameras:
             cam.stop_stream()
         event.accept()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)

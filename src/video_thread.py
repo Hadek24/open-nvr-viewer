@@ -20,6 +20,7 @@ class FFmpegThread(QThread):
         try:
             self.process = subprocess.Popen(
                 ["ffmpeg", "-rtsp_transport", "tcp", "-loglevel", "error", "-i", self.url, "-an", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL
             )
