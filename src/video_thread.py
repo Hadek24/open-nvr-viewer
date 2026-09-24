@@ -50,11 +50,11 @@ class FFmpegThread(QThread):
         self.running = False
         if self.process:
             try:
-                self.process.stdout.close()
+                self.process.kill()
             except Exception:
                 pass
             try:
-                self.process.kill()
+                self.process.stdout.close()
             except Exception:
                 pass
             self.process = None

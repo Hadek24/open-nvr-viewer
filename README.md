@@ -8,7 +8,7 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v1.3.0
+Current version — v1.3.1
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
@@ -20,11 +20,14 @@ Current version — v1.3.0
 * Mainstream when maximizing a camera
 * Persistent grid configuration using JSON
 * Double-click to maximize/restore a camera
-* The ability to reconnect to the cameras.
+* The ability to reconnect to the cameras (automatically and manually).
 * Graphical improvement of the application.
+* Connection status resource usage (RAM/CPU).
 
-### v1.3.0
-* Graphical improvement of the application.
+### v1.3.1
+* A status bar was added to monitor the NVR connection and RAM/CPU usage.
+* Automatic reconnection capability (10 sec.) was added.
+* Minor improvements to camera states (Connected/Connecting/No signal).
 
 ## Requirements
 
@@ -46,7 +49,7 @@ cd open-nvr-viewer
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg python3-pyqt6
+sudo apt install ffmpeg python3-pyqt6 python3-psutil
 ```
 
 ## How to use it?
@@ -64,7 +67,8 @@ python3 main.py
 * Dynamic Camera Assignment: Assign any available camera (supports up to 16 channels) or leave slots empty using individual dropdown selectors.
 * Optimized Bandwidth (Sub-stream): By default, grid slots load the low-resolution sub-stream to minimize CPU and network overhead.
 * Full-Screen Focus (Main-stream): Double-clicking any camera widget isolates that feed and automatically elevates it to the high-resolution main-stream. Double-click again to return to the grid.
-* Manual Reconnection: If a stream disconnects or fails, use the selector or action buttons; connection retries require user initiation by design.
+* Manual and automatic camera reconnection capability.
+* Ability to track application resource usage.
 
 ## Configuration
 
@@ -124,6 +128,7 @@ open-nvr-viewer/
 │   ├── config.py
 │   ├── camera_widget.py
 │   ├── main_window.py
+│   ├── status_bar.py
 │   ├── styles.py
 │   ├── title_bar.py
 │   ├── video_frame.py
@@ -140,6 +145,8 @@ The current priority is stability and reliability before adding additional featu
 ## Known limitations
 
 * Currently supports only the /Streaming/Channels/ RTSP URL structure; other NVR URL schemes are not yet implemented.
+* Direct connections to IP cameras have not been tested.
+* Direct camera support may require camera-specific RTSP URLs or additional configuration.
 
 ## License
 

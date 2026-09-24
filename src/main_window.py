@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPainter, QLinearGradient, QColor
 from src.camera_widget import CameraWidget
 from src.styles import main_windows_style
 from src.title_bar import TitleBar
+from src.status_bar import StatusBar
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -36,6 +37,8 @@ class MainWindow(QMainWindow):
         self.configuration_view = QWidget() #Pestaña "Configuration"
         self.tabs.addTab(self.configuration_view, "Configuration")
         self.configuration_layout = QVBoxLayout(self.configuration_view)
+        self.status_bar = StatusBar(self.config, self) #Barra de status
+        self.main_layout.addWidget(self.status_bar)
         self.top_bar = QHBoxLayout()
         self.grid_selector = QComboBox()
         self.grid_selector.setObjectName("grid_selector")

@@ -91,4 +91,24 @@ main_windows_style = """
         color: #6E7681;
         border: 1px solid #30363D;
     }
+    
+    QWidget#status_bar {
+        background-color: #161B22;
+        border-top: 1px solid #30363D;
+    }
+
+    QLabel#status_indicator {
+        color: #3FB950;
+        font-size: 12px;
+    }
+
+    QLabel#status_label {
+        color: #E6EDF3;
+        font-size: 12px;
+    }
+
+    QLabel#resource_label {
+        color: #B8C2CC;
+        font-size: 12px;
+    }
 """

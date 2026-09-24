@@ -32,6 +32,12 @@ class CameraWidget(QWidget):
         self.connection_timer = QTimer(self)
         self.connection_timer.setSingleShot(True)
         self.connection_timer.timeout.connect(self.handle_connection_timeout)
+        self.frame_timeout_timer = QTimer(self)
+        self.frame_timeout_timer.setSingleShot(True)
+        self.frame_timeout_timer.timeout.connect(self.handle_frame_timeout)
+        self.reconnect_timer = QTimer(self)
+        self.reconnect_timer.setSingleShot(True)
+        self.reconnect_timer.timeout.connect(self.handle_auto_reconnect)
         self.init_ui()
         if self.current_channel != "Vacío":
             self.play_stream("2")
@@ -109,7 +115,23 @@ class CameraWidget(QWidget):
     def handle_frame(self, image, thread):
         if thread is not self.ffmpeg_thread:
             return
+            
+        self.reconnect_timer.stop()
+        """
+        #Test frames
+        if not hasattr(self, "_debug_frame_count"):
+            self._debug_frame_count = 0
+
+        self._debug_frame_count += 1
+
+        if self._debug_frame_count % 30 == 0:
+            print(f"CAM {self.slot_index}: {self._debug_frame_count} frames")
+        #Test frames
+        """
         self.video_frame.set_image(image)
+        self.status_label.setStyleSheet("color: green; font-weight: bold;")
+        self.status_label.setText("OK")
+        self.frame_timeout_timer.start(5000)
 
     def handle_connection_timeout(self):
         self.status_label.setStyleSheet("color: red; font-weight: bold;")
@@ -118,6 +140,15 @@ class CameraWidget(QWidget):
             self.ffmpeg_thread.stop()
             self.ffmpeg_thread.wait(1000)
             self.ffmpeg_thread = None
+        self.reconnect_timer.start(10000)
+
+    def handle_frame_timeout(self):
+        #print(">>> TIMEOUT <<<") #Prueba para timeout de camaras.
+        self.status_label.setStyleSheet("color: red; font-weight: bold;")
+        self.status_label.setText("SIN SEÑAL")
+        self.video_frame.image = None
+        self.video_frame.update()
+        self.reconnect_timer.start(10000)
     
     def handle_stream_ready(self):
         self.connection_timer.stop()
@@ -145,6 +176,11 @@ class CameraWidget(QWidget):
         pass
 
     def handle_reconnect(self):
+        if self.current_channel == "Vacío":
+            return
+        self.play_stream("2")
+
+    def handle_auto_reconnect(self):
         if self.current_channel == "Vacío":
             return
         self.play_stream("2")
