@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias del sistema (Qt, OpenGL y Zip)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1 libegl1 libxkbcommon-x11-0 zip
+          sudo apt-get install -y libgl1 libegl1 libxkbcommon-x11-0 libxcb-cursor0 zip
 
       - name: Instalar dependencias de Python y PyInstaller
         run: |
