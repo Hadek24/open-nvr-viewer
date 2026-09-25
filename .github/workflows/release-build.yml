@@ -21,7 +21,7 @@ jobs:
       - name: Instalar dependencias del sistema (Qt y OpenGL)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-glx libegl1-mesa libxkbcommon-x11-0
+          sudo apt-get install -y libgl1 libegl1 libxkbcommon-x11-0 zip
 
       - name: Instalar dependencias de Python y PyInstaller
         run: |
