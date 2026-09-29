@@ -29,6 +29,7 @@ class CameraWidget(QWidget):
         self.ffmpeg_thread = None
         self.is_muted = True
         self.popup_open = False
+        self.reconnect_attempts = 0
         self.connection_timer = QTimer(self)
         self.connection_timer.setSingleShot(True)
         self.connection_timer.timeout.connect(self.handle_connection_timeout)
@@ -128,6 +129,7 @@ class CameraWidget(QWidget):
             print(f"CAM {self.slot_index}: {self._debug_frame_count} frames")
         #Test frames
         """
+        self.reconnect_attempts = 0
         self.video_frame.set_image(image)
         self.status_label.setStyleSheet("color: green; font-weight: bold;")
         self.status_label.setText("OK")
@@ -140,7 +142,11 @@ class CameraWidget(QWidget):
             self.ffmpeg_thread.stop()
             self.ffmpeg_thread.wait(1000)
             self.ffmpeg_thread = None
-        self.reconnect_timer.start(10000)
+        self.reconnect_attempts += 1
+        if self.reconnect_attempts <= 6:
+            self.reconnect_timer.start(10000)
+        else:
+            self.reconnect_timer.start(600000)
 
     def handle_frame_timeout(self):
         #print(">>> TIMEOUT <<<") #Prueba para timeout de camaras.
