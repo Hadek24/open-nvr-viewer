@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QGridLayout, QLabel, QHBoxLayout, QPushButton
 
 class TitleBar(QWidget):
@@ -20,12 +21,18 @@ class TitleBar(QWidget):
         # el título respecto de toda la ventana.
         layout.setColumnStretch(0, 1)
         layout.setColumnStretch(2, 1)
+        
+        # Icono de barra de título
+        self.title_icon = QLabel()
+        self.title_icon.setPixmap(QPixmap("resources/app_icon.png").scaled(22, 22, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        self.title_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        layout.addWidget(self.title_icon, 0, 0, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         self.title_label = QLabel("Open NVR Viewer")
         self.title_label.setObjectName("title_label")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # El texto no intercepta los eventos del mouse.
         self.title_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         layout.addWidget(self.title_label, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter)
