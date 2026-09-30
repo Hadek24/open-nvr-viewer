@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QComboBox, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QComboBox, QLabel, QGraphicsDropShadowEffect
 from src.video_thread import FFmpegThread
 from src.video_frame import VideoFrame
 
@@ -36,6 +36,10 @@ class CameraWidget(QWidget):
         self.frame_timeout_timer = QTimer(self)
         self.frame_timeout_timer.setSingleShot(True)
         self.frame_timeout_timer.timeout.connect(self.handle_frame_timeout)
+        # Temporizador para ocultar el estado Connected
+        self.status_connected_timer = QTimer(self)
+        self.status_connected_timer.setSingleShot(True)
+        self.status_connected_timer.timeout.connect(self.hide_connected_status)
         self.reconnect_timer = QTimer(self)
         self.reconnect_timer.setSingleShot(True)
         self.reconnect_timer.timeout.connect(self.handle_auto_reconnect)
@@ -48,9 +52,13 @@ class CameraWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.video_container = QWidget()
         self.video_frame = VideoFrame(self)
+        self.status_label = QLabel("Desconectado", self.video_container)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.set_status("Desconectado", "red")
         video_layout = QGridLayout(self.video_container)
         video_layout.setContentsMargins(0, 0, 0, 0)
         video_layout.addWidget(self.video_frame, 0, 0)
+        self.status_label.raise_()
         layout.addWidget(self.video_container)
         self.controls_widget = QWidget(self.video_container)
         self.controls_widget.setGeometry(0, 0, self.video_container.width(), 40)
@@ -78,18 +86,25 @@ class CameraWidget(QWidget):
         self.reconnect_btn.setToolTip("Reconectar")
         self.reconnect_btn.clicked.connect(self.handle_reconnect)
         controls_layout.addWidget(self.reconnect_btn)
-        self.status_label = QLabel("Desconectado")
-        self.status_label.setStyleSheet("color: red; font-weight: bold;")
-        controls_layout.addWidget(self.status_label)
         controls_layout.addStretch()
         self.setLayout(layout)
+
+    def set_status(self, text, color): #Permite centralizar la edicion grafica de los estados de las camaras
+        self.status_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 20px;")
+        self.status_label.setText(text)
+        self.status_label.show()
+        if not self.status_label.graphicsEffect(): #Agrega sombra a los estados
+            shadow = QGraphicsDropShadowEffect(self.status_label)
+            shadow.setBlurRadius(20)
+            shadow.setOffset(0, 0)
+            shadow.setColor(Qt.GlobalColor.white)
+            self.status_label.setGraphicsEffect(shadow)
 
     def play_stream(self, stream_type):
         if self.current_channel == "Vacío":
             return
         self.stop_stream()
-        self.status_label.setStyleSheet("color: orange; font-weight: bold;")
-        self.status_label.setText("Conectando...")
+        self.set_status("Conectando...", "orange")
         channel_code = f"{self.current_channel}0{stream_type}"
         url = f"rtsp://{self.config['NVR_USER']}:{self.config['NVR_PASS']}@{self.config['NVR_IP']}:{self.config['NVR_PORT']}/Streaming/channels/{channel_code}"
         if stream_type == "1":
@@ -106,6 +121,9 @@ class CameraWidget(QWidget):
 
     def stop_stream(self):
         self.connection_timer.stop()
+        self.frame_timeout_timer.stop()
+        self.status_connected_timer.stop()
+        self.reconnect_timer.stop()
         if self.ffmpeg_thread:
             self.ffmpeg_thread.stop()
             self.ffmpeg_thread.wait(1000)
@@ -116,7 +134,6 @@ class CameraWidget(QWidget):
     def handle_frame(self, image, thread):
         if thread is not self.ffmpeg_thread:
             return
-            
         self.reconnect_timer.stop()
         """
         #Test frames
@@ -131,13 +148,16 @@ class CameraWidget(QWidget):
         """
         self.reconnect_attempts = 0
         self.video_frame.set_image(image)
-        self.status_label.setStyleSheet("color: green; font-weight: bold;")
-        self.status_label.setText("OK")
+        if self.status_label.text() != "Conectado":
+            self.set_status("Conectado", "#00FF00")
+            self.status_connected_timer.start(5000)
         self.frame_timeout_timer.start(5000)
 
+    def hide_connected_status(self):
+        self.status_label.hide()
+
     def handle_connection_timeout(self):
-        self.status_label.setStyleSheet("color: red; font-weight: bold;")
-        self.status_label.setText("SIN SEÑAL")
+        self.set_status("SIN SEÑAL", "red")
         if self.ffmpeg_thread:
             self.ffmpeg_thread.stop()
             self.ffmpeg_thread.wait(1000)
@@ -150,20 +170,19 @@ class CameraWidget(QWidget):
 
     def handle_frame_timeout(self):
         #print(">>> TIMEOUT <<<") #Prueba para timeout de camaras.
-        self.status_label.setStyleSheet("color: red; font-weight: bold;")
-        self.status_label.setText("SIN SEÑAL")
+        self.set_status("SIN SEÑAL", "red")
         self.video_frame.image = None
         self.video_frame.update()
         self.reconnect_timer.start(10000)
     
     def handle_stream_ready(self):
         self.connection_timer.stop()
-        self.status_label.setStyleSheet("color: green; font-weight: bold;")
-        self.status_label.setText("OK")
+        self.set_status("Conectado", "#00FF00")
+        #self.status_label.show()
+        self.status_connected_timer.start(5000)
 
     def handle_stream_error(self):
-        self.status_label.setStyleSheet("color: red; font-weight: bold;")
-        self.status_label.setText("SIN SEÑAL")
+        self.set_status("SIN SEÑAL", "red")
 
     def handle_channel_changed(self):
         selected_data = self.cam_selector.currentData()
@@ -174,8 +193,7 @@ class CameraWidget(QWidget):
             if self.current_channel != "Vacío":
                 self.play_stream("2")
             else:
-                self.status_label.setStyleSheet("color: red; font-weight: bold;")
-                self.status_label.setText("Desconectado")
+                self.set_status("Desconectado", "red")
             self.parent_grid.save_current_mapping()
 
     def toggle_audio(self):
@@ -213,4 +231,8 @@ class CameraWidget(QWidget):
         self.controls_widget.setGeometry( 0,
         self.video_container.height() - 40,
         self.video_container.width(), 40)
+        
+        self.status_label.setGeometry(0, 0,
+        self.video_container.width(),
+        self.video_container.height())
         super().resizeEvent(event)
