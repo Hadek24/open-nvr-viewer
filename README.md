@@ -1,6 +1,6 @@
 # Open NVR Viewer
 
-A lightweight Linux oriented GUI application in Python for viewing NVR camera streams using RTSP.
+A lightweight Linux-oriented GUI application in Python for viewing NVR camera streams using RTSP.
 
 ## What does it solve?
 
@@ -8,7 +8,7 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v1.3.1
+Current version — v1.3.4
 
 * PyQt6 graphical interface
 * ffmpeg-based video playback
@@ -20,14 +20,17 @@ Current version — v1.3.1
 * Mainstream when maximizing a camera
 * Persistent grid configuration using JSON
 * Double-click to maximize/restore a camera
-* The ability to reconnect to the cameras (automatically and manually).
+* Automatic and manual camera reconnection.
 * Graphical improvement of the application.
-* Connection status resource usage (RAM/CPU).
+* CPU and RAM usage monitoring.
+* Configuration interface for NVR connection settings and connection profiles
 
-### v1.3.1
-* A status bar was added to monitor the NVR connection and RAM/CPU usage.
-* Automatic reconnection capability (10 sec.) was added.
-* Minor improvements to camera states (Connected/Connecting/No signal).
+### v1.3.4
+* The automatic reconnection capability for cameras has been improved (every 10 seconds for 1 minute; after that minute, one attempt every 10 minutes).
+* Minor improvement to the title bar and taskbar icon.
+* The plaintext password was removed from config.json in favor of using the keyring.
+* Improvements to camera status visualization.
+* Add configuration tab with NVR connection and profile management interface.
 
 ## Requirements
 
@@ -36,6 +39,7 @@ Current version — v1.3.1
 * PyQt6
 * ffmpeg installed and available in the PATH
 * A compatible NVR/camera system providing RTSP streams
+* Python keyring support
 
 ## Installation
 
@@ -49,13 +53,15 @@ cd open-nvr-viewer
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg python3-pyqt6 python3-psutil
+sudo apt install ffmpeg libxcb-cursor0 python3-pyqt6 python3-psutil python3-keyring
 ```
 
 ## How to use it?
 
-1. Ensure configuration parameters are set in `config.json` (NVR IP address, credentials, ports, and total channels).
-2. Launch the application:
+1. Ensure configuration parameters are set in `config.json` (NVR IP address, user, ports, and total channels).
+2. Store the NVR password in the system keyring (Replace YOUR_NVR_PASSWORD with the password of the NVR):
+**python3 -c "import keyring; keyring.set_password('open-nvr-viewer', 'nvr', 'YOUR_NVR_PASSWORD')"**
+3. Launch the application:
 
 ```bash
 python3 main.py
@@ -68,7 +74,7 @@ python3 main.py
 * Optimized Bandwidth (Sub-stream): By default, grid slots load the low-resolution sub-stream to minimize CPU and network overhead.
 * Full-Screen Focus (Main-stream): Double-clicking any camera widget isolates that feed and automatically elevates it to the high-resolution main-stream. Double-click again to return to the grid.
 * Manual and automatic camera reconnection capability.
-* Ability to track application resource usage.
+* Application resource usage monitoring.
 
 ## Configuration
 
@@ -83,7 +89,6 @@ Example (`config.json`):
 ```json
 {
     "NVR_USER": "your_user",
-    "NVR_PASS": "your_password",
     "NVR_IP": "192.168.1.100",
     "NVR_PORT": "554",
     "TOTAL_CHANNELS": 16,
@@ -98,7 +103,7 @@ Example (`config.json`):
 
 ```
 
-> ⚠️ **Important:** `config.json` contains credentials and is intentionally excluded from the Git repository. Do not commit real passwords or other sensitive information.
+⚠️ **Important:** config.json is intentionally excluded from the Git repository. Do not commit real passwords or other sensitive information.
 
 ## RTSP
 
@@ -119,32 +124,35 @@ The multi-camera grid uses the substream to reduce resource usage, while the max
 
 ```text
 open-nvr-viewer/
-├── main.py
 ├── config.example.json
-├── config.json          # Local only - not tracked by Git
-├── LICENSE 
-├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── camera_widget.py
-│   ├── main_window.py
-│   ├── status_bar.py
-│   ├── styles.py
-│   ├── title_bar.py
-│   ├── video_frame.py
-│   └── video_thread.py
-├── .gitignore
-└── README.md
+├── config.json        !Local, excluded from Git
+├── LICENSE
+├── main.py
+├── README.md
+├── resources
+│   └── app_icon.png
+└── src
+    ├── camera_widget.py
+    ├── config.py
+    ├── configuration_tab.py
+    ├── __init__.py
+    ├── main_window.py
+    ├── status_bar.py
+    ├── styles.py
+    ├── title_bar.py
+    ├── video_frame.py
+    └── video_thread.py
+
 ```
 
 ## Project Status
 
 This is an actively developed personal project.
-The current priority is stability and reliability before adding additional features.
+The project is actively developed, with a focus on stability, reliability, and incremental feature development.
 
 ## Known limitations
 
-* Currently supports only the /Streaming/Channels/ RTSP URL structure; other NVR URL schemes are not yet implemented.
+* Currently supports only NVRs using the /Streaming/Channels/ RTSP URL structure.
 * Direct connections to IP cameras have not been tested.
 * Direct camera support may require camera-specific RTSP URLs or additional configuration.
 
