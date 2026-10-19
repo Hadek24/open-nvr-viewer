@@ -1,4 +1,4 @@
-from src.config import load_config, save_config
+from src.config import load_config, save_config, get_default_profile
 from PyQt6.QtCore import Qt, QPoint, QEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QGridLayout, QTabWidget, QLabel, QPushButton, QSizeGrip
 from PyQt6.QtGui import QPainter, QLinearGradient, QColor, QCursor
@@ -19,6 +19,9 @@ class MainWindow(QMainWindow):
         self.resize(1280, 720)
         self.setMinimumSize(800, 500)
         self.config = load_config()
+        if self.config is None:
+            self.config = get_default_profile()
+            self.config["name"] = "--"
         self.cameras = []
         self.maximized_cam = None
         self.central_widget = QWidget()

@@ -24,6 +24,11 @@ class StatusBar(QWidget):
         self.status_label = QLabel("NVR conectado")
         self.status_label.setObjectName("status_label")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        
+        profile_name = self.config.get("name", "--") if self.config else "--"
+        self.active_profile_label = QLabel(f"Active Profile: {profile_name}")
+        self.active_profile_label.setObjectName("active_profile_label")
+        self.active_profile_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         self.resource_label = QLabel("CPU: --    RAM: --")
         self.resource_label.setObjectName("resource_label")
@@ -37,6 +42,10 @@ class StatusBar(QWidget):
 
         layout.addWidget(self.status_indicator)
         layout.addWidget(self.status_label)
+        
+        layout.addStretch()
+
+        layout.addWidget(self.active_profile_label)
 
         layout.addStretch()
 
@@ -59,6 +68,8 @@ class StatusBar(QWidget):
             self.status_label.setText("NVR no disponible")
 
     def check_nvr_ping(self):
+        if not self.config:
+            return False
         nvr_ip = self.config.get("NVR_IP")
 
         if not nvr_ip:

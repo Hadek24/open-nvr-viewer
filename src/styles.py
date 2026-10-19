@@ -107,6 +107,11 @@ main_windows_style = """
         font-size: 12px;
     }
 
+    QLabel#active_profile_label {
+    color: #E6EDF3;
+    font-size: 12px;
+    }
+
     QLabel#resource_label {
         color: #B8C2CC;
         font-size: 12px;
