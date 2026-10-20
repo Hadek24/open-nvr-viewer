@@ -117,3 +117,221 @@ main_windows_style = """
         font-size: 12px;
     }
 """
+
+"""
+#####################################
+# Configuration tab                 #
+#####################################
+"""
+
+# Configuration tab: general panels
+configuration_panel_style = """
+    QWidget#configuration_left {
+        border: 1px solid white;
+        border-radius: 6px;
+    }
+"""
+
+configuration_scroll_area_style = """
+    QScrollArea {
+        border: 1px solid white;
+        border-radius: 6px;
+        background: transparent;
+    }
+
+    QScrollArea > QWidget > QWidget {
+        background: transparent;
+    }
+"""
+
+# Configuration tab: action buttons
+configuration_action_button_style = """
+    QPushButton {
+        color: white;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 6px 12px;
+        border: 1px solid #666666;
+        border-radius: 4px;
+        background-color: #333333;
+    }
+
+    QPushButton:hover {
+        background-color: #444444;
+        border: 1px solid #888888;
+    }
+
+    QPushButton:pressed {
+        background-color: #555555;
+    }
+"""
+
+configuration_menu_button_style = """
+    QPushButton {
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: left;
+        padding: 8px 12px;
+        border: 1px solid #666666;
+        border-radius: 4px;
+        background-color: #333333;
+    }
+
+    QPushButton:hover {
+        background-color: #444444;
+        border: 1px solid #888888;
+    }
+
+    QPushButton:pressed {
+        background-color: #555555;
+    }
+"""
+
+# Configuration tab: input fields
+configuration_field_style = """
+    QLineEdit {
+        color: white;
+        font-size: 14px;
+        padding: 5px 8px;
+        border: 1px solid #666666;
+        border-radius: 4px;
+        background-color: #333333;
+    }
+
+    QLineEdit:focus {
+        border: 1px solid #888888;
+    }
+"""
+
+# Configuration tab: editing profile indicator
+configuration_editing_label_style = """
+    font-weight: bold;
+    color: #d97706;
+"""
+
+configuration_title_style = """
+    QLabel {
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+    }
+"""
+
+"""
+#####################################
+# Configuration tab / NVR           #
+#####################################
+"""
+
+nvr_section_title_style = """
+    QLabel {
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+    }
+"""
+
+nvr_section_description_style = """
+    QLabel {
+        color: #CCCCCC;
+        font-size: 13px;
+        border: none;
+    }
+"""
+
+nvr_subsection_title_style = """
+    QLabel {
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border: none;
+    }
+"""
+
+nvr_field_label_style = """
+    QLabel {
+        color: white;
+        font-size: 14px;
+        border: none;
+    }
+"""
+
+nvr_separator_style = """
+    QLabel {
+        background-color: #555555;
+        border: none;
+    }
+"""
+
+nvr_config_status_found_style = """
+    QLabel {
+        color: #00FF00;
+        font-size: 14px;
+        font-weight: bold;
+        border: none;
+    }
+"""
+
+nvr_config_status_not_found_style = """
+    QLabel {
+        color: #F85149;
+        font-size: 14px;
+        font-weight: bold;
+        border: none;
+    }
+"""
+
+nvr_profile_list_style = """
+    QListWidget {
+        color: white;
+        font-size: 14px;
+        border: 1px solid #666666;
+        border-radius: 4px;
+        background-color: #333333;
+        padding: 4px;
+    }
+
+    QListWidget::item {
+        padding: 6px;
+    }
+
+    QListWidget::item:selected {
+        background-color: #555555;
+    }
+"""
+
+# ---------------------------------------------------------------------
+# NVR connection test dialog styles
+# ---------------------------------------------------------------------
+
+connection_test_title_style = """
+    QLabel {
+        font-weight: bold;
+        font-size: 16px;
+        border: none;
+    }
+"""
+
+connection_test_pending_style = """
+    QLabel {
+        color: #9CA3AF;
+        border: none;
+    }
+"""
+
+connection_test_success_style = """
+    QLabel {
+        color: #3FB950;
+        border: none;
+    }
+"""
+
+connection_test_failure_style = """
+    QLabel {
+        color: #F85149;
+        border: none;
+    }
+"""
