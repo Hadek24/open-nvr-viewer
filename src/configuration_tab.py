@@ -8,8 +8,7 @@ Responsabilidades:
 - Construir el contenedor de contenido derecho.
 - Integrar las secciones de configuración, actualmente NVRSection.
 
-La lógica específica del NVR y la gestión de perfiles pertenecen
-a configuration_tab_section/nvr.py.
+La gestión de las diferentes opciones están separadas en módulos propios.
 """
 
 # ---------------------------------------------------------------------
@@ -22,6 +21,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QPushButton,
+    QStackedWidget,
 )
 
 from src.styles import (
@@ -31,6 +31,7 @@ from src.styles import (
 )
 
 from src.configuration_tab_section.nvr import NVRSection
+from src.configuration_tab_section.config_file import ConfigFileSection
 
 # ---------------------------------------------------------------------
 # ConfigurationTab
@@ -72,7 +73,8 @@ class ConfigurationTab(QWidget):
         )
 
         # Botones de navegación
-        self.nvr_button = QPushButton("NVR")
+        self.config_file_button = QPushButton("Config File")
+        self.profiles_button = QPushButton("Profiles")
         self.option1_button = QPushButton("RTSP")
         self.option2_button = QPushButton("TSHOOT")
         self.option3_button = QPushButton("CAMARAS")
@@ -81,7 +83,8 @@ class ConfigurationTab(QWidget):
 
         # Aplicar estilo común a los botones
         navigation_buttons = [
-            self.nvr_button,
+            self.config_file_button,
+            self.profiles_button,
             self.option1_button,
             self.option2_button,
             self.option3_button,
@@ -110,9 +113,29 @@ class ConfigurationTab(QWidget):
         self.right_panel_layout = QVBoxLayout(self.right_panel)
         self.right_panel_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Sección NVR
-        self.nvr_section = NVRSection()
-        self.right_panel_layout.addWidget(self.nvr_section)
+        # Contenedor de secciones: cada botón muestra su propio panel.
+        self.sections_stack = QStackedWidget()
+        self.config_file_section = ConfigFileSection()
+        self.profiles_section = NVRSection()
+        self.sections_stack.addWidget(self.config_file_section)
+        self.sections_stack.addWidget(self.profiles_section)
+
+        # El panel derecho contiene únicamente el contenedor de secciones.
+        self.right_panel_layout.addWidget(self.sections_stack)
+
+        # Config File se muestra por defecto.
+        self.sections_stack.setCurrentWidget(
+            self.config_file_section
+        )
+
+        # Navegación entre las secciones implementadas.
+        self.config_file_button.clicked.connect(
+            lambda: self.sections_stack.setCurrentWidget(self.config_file_section)
+        )
+
+        self.profiles_button.clicked.connect(
+            lambda: self.sections_stack.setCurrentWidget(self.profiles_section)
+        )
 
         # =============================================================
         # 4. Integración de los paneles en el layout principal

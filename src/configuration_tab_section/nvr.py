@@ -2,11 +2,10 @@
 """
 nvr.py
 
-Sección de configuración del NVR para Open NVR Viewer.
+Gestión de perfiles de conexión NVR para Open NVR Viewer.
 
 Responsabilidades:
-- Presentar la interfaz de configuración del NVR.
-- Gestionar los perfiles de conexión.
+- Crear, editar, activar y eliminar perfiles de conexión.
 - Ejecutar pruebas de conectividad mediante ConnectionTestThread.
 - Mostrar los resultados de diagnóstico mediante ConnectionTestDialog.
 """
@@ -40,10 +39,6 @@ from PyQt6.QtWidgets import (
 
 # Application configuration and profile management
 from src.config import (
-    create_config,
-    get_config_path,
-    get_config_dir,
-    delete_config,
     create_profile,
     update_profile,
     get_profiles,
@@ -55,13 +50,6 @@ from src.config import (
     set_nvr_password,
     generate_profile_id,
     validate_profile,
-)
-
-# Shared styles
-from src.styles import (
-    configuration_action_button_style,
-    configuration_field_style,
-    configuration_scroll_area_style,
 )
 
 # Connection diagnostics
@@ -78,8 +66,6 @@ from src.styles import (
     nvr_subsection_title_style,
     nvr_field_label_style,
     nvr_separator_style,
-    nvr_config_status_found_style,
-    nvr_config_status_not_found_style,
     nvr_profile_list_style,
     connection_test_title_style,
     connection_test_pending_style,
@@ -159,7 +145,7 @@ class ConnectionTestDialog(QDialog):
             status.setStyleSheet(connection_test_failure_style)
 
 class NVRSection(QWidget):
-    """Manage NVR settings, connection profiles, and diagnostics."""
+    """Manage NVR connection profiles and diagnostics."""
 
     def __init__(self, parent=None):
         """Initialize the NVR configuration interface."""
@@ -193,98 +179,21 @@ class NVRSection(QWidget):
         self.right_panel_layout.addWidget(self.right_scroll)
 
         # -------------------------------------------------------------
-        # NVR configuration: title and description
+        # Profiles section: title and description
         # -------------------------------------------------------------
 
-        self.nvr_title = QLabel("NVR Configuration")
+        self.nvr_title = QLabel("Profiles")
         self.nvr_title.setStyleSheet(nvr_section_title_style)
 
         self.nvr_description = QLabel(
-            "This application requires a configuration file to store its settings. "
-            "If no configuration file is found, generate one before creating a "
-            "connection profile."
+            "Create and manage connection profiles for your NVR devices. "
+            "Each profile stores its own connection settings."
         )
         self.nvr_description.setWordWrap(True)
         self.nvr_description.setStyleSheet(nvr_section_description_style)
 
-        # Section separator
-        self.separator_1 = QLabel()
-        self.separator_1.setFixedHeight(1)
-        self.separator_1.setStyleSheet(nvr_separator_style)
-
-        # -------------------------------------------------------------
-        # Configuration file status
-        # -------------------------------------------------------------
-
-        self.configuration_file_layout = QHBoxLayout()
-
-        self.configuration_file_title = QLabel("Configuration File")
-        self.configuration_file_title.setStyleSheet(nvr_subsection_title_style)
-
-        self.config_status_indicator = QLabel("● Found")
-        self.config_status_indicator.setStyleSheet(nvr_config_status_found_style)
-
-        self.configuration_file_layout.addWidget(self.configuration_file_title)
-        self.configuration_file_layout.addStretch()
-        self.configuration_file_layout.addWidget(self.config_status_indicator)
-
-        # -------------------------------------------------------------
-        # Configuration file actions
-        # -------------------------------------------------------------
-
-        self.generate_config_label = QLabel("Generate configuration file:")
-        self.generate_config_label.setFixedWidth(190)
-        self.generate_config_label.setStyleSheet(nvr_field_label_style)
-
-        self.generate_config_button = QPushButton("Generate")
-        self.generate_config_button.setFixedWidth(100)
-        self.generate_config_button.setStyleSheet(configuration_action_button_style)
-        self.generate_config_button.clicked.connect(self.generate_config_file)
-
-        self.generate_config_layout = QHBoxLayout()
-        self.generate_config_layout.addWidget(self.generate_config_label)
-        self.generate_config_layout.addWidget(self.generate_config_button)
-        self.generate_config_layout.addStretch()
-
-        self.delete_config_label = QLabel("Delete configuration file:")
-        self.delete_config_label.setFixedWidth(190)
-        self.delete_config_label.setStyleSheet(nvr_field_label_style)
-
-        self.delete_config_button = QPushButton("Delete")
-        self.delete_config_button.setFixedWidth(100)
-        self.delete_config_button.setStyleSheet(configuration_action_button_style)
-        self.delete_config_button.clicked.connect(self.delete_config_file)
-
-        self.delete_config_layout = QHBoxLayout()
-        self.delete_config_layout.addWidget(self.delete_config_label)
-        self.delete_config_layout.addWidget(self.delete_config_button)
-        self.delete_config_layout.addStretch()
-
-        self.open_config_label = QLabel("Open configuration directory:")
-        self.open_config_label.setFixedWidth(190)
-        self.open_config_label.setStyleSheet(nvr_field_label_style)
-
-        self.open_config_button = QPushButton("Open")
-        self.open_config_button.setFixedWidth(100)
-        self.open_config_button.setStyleSheet(configuration_action_button_style)
-        self.open_config_button.clicked.connect(self.open_config_directory)
-
-        self.open_config_layout = QHBoxLayout()
-        self.open_config_layout.addWidget(self.open_config_label)
-        self.open_config_layout.addWidget(self.open_config_button)
-        self.open_config_layout.addStretch()
-
-        # Add configuration file widgets to the main layout
         self.right_layout.addWidget(self.nvr_title)
         self.right_layout.addWidget(self.nvr_description)
-        self.right_layout.addSpacing(8)
-        self.right_layout.addWidget(self.separator_1)
-        self.right_layout.addSpacing(8)
-
-        self.right_layout.addLayout(self.configuration_file_layout)
-        self.right_layout.addLayout(self.generate_config_layout)
-        self.right_layout.addLayout(self.delete_config_layout)
-        self.right_layout.addLayout(self.open_config_layout)
 
         # -------------------------------------------------------------
         # NVR connection configuration
@@ -452,91 +361,8 @@ class NVRSection(QWidget):
 
         self.right_layout.addLayout(self.profile_actions_layout)
 
-        # Load initial configuration state
+        # Load existing connection profiles.
         self.load_profiles()
-        self.update_config_status()
-
-    # -----------------------------------------------------------------
-    # Configuration file operations
-    # -----------------------------------------------------------------
-
-    def update_config_status(self):
-        """Refresh the indicator showing whether the config file exists."""
-        config_path = get_config_path()
-
-        if os.path.exists(config_path):
-            self.config_status_indicator.setText("● Found")
-            self.config_status_indicator.setStyleSheet(nvr_config_status_found_style)
-        else:
-            self.config_status_indicator.setText("● Not Found")
-            self.config_status_indicator.setStyleSheet(nvr_config_status_not_found_style)
-
-    def generate_config_file(self):
-        """Create the configuration file if it does not already exist."""
-        config_path = get_config_path()
-
-        if os.path.exists(config_path):
-            QMessageBox.information(
-                self,
-                "Configuration File",
-                "The configuration file already exists.",
-            )
-            return
-
-        create_config()
-        self.update_config_status()
-
-        QMessageBox.information(
-            self,
-            "Configuration File",
-            "The configuration file was created successfully.",
-        )
-
-    def delete_config_file(self):
-        """Ask for confirmation and delete the configuration file."""
-        reply = QMessageBox.warning(
-            self,
-            "Delete Configuration",
-            "Are you sure?\n\n"
-            "This will delete all profile configuration information. "
-            "This action cannot be undone",
-            QMessageBox.StandardButton.Ok
-            | QMessageBox.StandardButton.Cancel,
-            QMessageBox.StandardButton.Cancel,
-        )
-
-        if reply != QMessageBox.StandardButton.Ok:
-            return
-
-        if not delete_config():
-            QMessageBox.critical(
-                self,
-                "Error",
-                "The configuration could not be deleted.",
-            )
-            return
-
-        QMessageBox.information(
-            self,
-            "Restart Required",
-            "The application needs to restart.",
-            QMessageBox.StandardButton.Ok,
-        )
-
-        os.execv(
-            sys.executable,
-            [sys.executable] + sys.argv,
-        )
-
-    def open_config_directory(self):
-        """Open the configuration directory, creating it if necessary."""
-        config_dir = get_config_dir()
-        os.makedirs(config_dir, exist_ok=True)
-
-        if sys.platform == "win32":
-            os.startfile(config_dir)
-        else:
-            os.system(f'xdg-open "{config_dir}"')
 
     # -----------------------------------------------------------------
     # Connection profile loading
