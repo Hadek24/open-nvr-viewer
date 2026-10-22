@@ -30,7 +30,7 @@ from src.styles import (
     configuration_title_style,
 )
 
-from src.configuration_tab_section.nvr import NVRSection
+from src.configuration_tab_section.profiles import ProfilesSection
 from src.configuration_tab_section.config_file import ConfigFileSection
 
 # ---------------------------------------------------------------------
@@ -116,7 +116,7 @@ class ConfigurationTab(QWidget):
         # Contenedor de secciones: cada botón muestra su propio panel.
         self.sections_stack = QStackedWidget()
         self.config_file_section = ConfigFileSection()
-        self.profiles_section = NVRSection()
+        self.profiles_section = ProfilesSection()
         self.sections_stack.addWidget(self.config_file_section)
         self.sections_stack.addWidget(self.profiles_section)
 

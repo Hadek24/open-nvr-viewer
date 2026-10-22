@@ -23,13 +23,13 @@ from src.config import (
 from src.styles import (
     configuration_action_button_style,
     configuration_scroll_area_style,
-    nvr_section_title_style,
-    nvr_section_description_style,
-    nvr_subsection_title_style,
-    nvr_field_label_style,
-    nvr_separator_style,
-    nvr_config_status_found_style,
-    nvr_config_status_not_found_style,
+    configuration_section_title_style,
+    configuration_section_description_style,
+    configuration_subsection_title_style,
+    configuration_field_label_style,
+    configuration_separator_style,
+    configuration_status_found_style,
+    configuration_status_not_found_style,
 )
 
 class ConfigFileSection(QWidget):
@@ -54,14 +54,14 @@ class ConfigFileSection(QWidget):
         self.main_layout.addWidget(self.scroll_area)
 
         self.title = QLabel("Config File")
-        self.title.setStyleSheet(nvr_section_title_style)
+        self.title.setStyleSheet(configuration_section_title_style)
 
         self.description = QLabel(
             "Manage the configuration file used by Open NVR Viewer. "
             "Connection profiles are stored in this file."
         )
         self.description.setWordWrap(True)
-        self.description.setStyleSheet(nvr_section_description_style)
+        self.description.setStyleSheet(configuration_section_description_style)
 
         self.content_layout.addWidget(self.title)
         self.content_layout.addWidget(self.description)
@@ -69,21 +69,21 @@ class ConfigFileSection(QWidget):
         # Separador entre el título principal y el contenido.
         self.separator_1 = QLabel()
         self.separator_1.setFixedHeight(1)
-        self.separator_1.setStyleSheet(nvr_separator_style)
+        self.separator_1.setStyleSheet(configuration_separator_style)
 
         self.content_layout.addSpacing(8)
         self.content_layout.addWidget(self.separator_1)
         self.content_layout.addSpacing(8)
 
         self.status_title = QLabel("Configuration File Check")
-        self.status_title.setStyleSheet(nvr_subsection_title_style)
+        self.status_title.setStyleSheet(configuration_subsection_title_style)
 
         self.config_status_indicator = QLabel()
         self.content_layout.addWidget(self.status_title)
 
         status_layout = QHBoxLayout()
         self.status_label = QLabel("Status:")
-        self.status_label.setStyleSheet(nvr_field_label_style)
+        self.status_label.setStyleSheet(configuration_field_label_style)
 
         status_layout.addWidget(self.status_label)
         status_layout.addStretch()
@@ -93,7 +93,7 @@ class ConfigFileSection(QWidget):
         # Separador entre el título y el estado del archivo.
         self.separator_2 = QLabel()
         self.separator_2.setFixedHeight(1)
-        self.separator_2.setStyleSheet(nvr_separator_style)
+        self.separator_2.setStyleSheet(configuration_separator_style)
         
         self.content_layout.addSpacing(8)
         self.content_layout.addWidget(self.separator_2)
@@ -101,7 +101,7 @@ class ConfigFileSection(QWidget):
 
         # --- Nueva subsección de acciones ---
         self.actions_title = QLabel("Configuration File Management")
-        self.actions_title.setStyleSheet(nvr_subsection_title_style)
+        self.actions_title.setStyleSheet(configuration_subsection_title_style)
         self.content_layout.addWidget(self.actions_title)
 
         self.content_layout.addSpacing(8)
@@ -129,7 +129,7 @@ class ConfigFileSection(QWidget):
 
         label = QLabel(label_text)
         label.setFixedWidth(190)
-        label.setStyleSheet(nvr_field_label_style)
+        label.setStyleSheet(configuration_field_label_style)
 
         button = QPushButton(button_text)
         button.setFixedWidth(100)
@@ -146,12 +146,12 @@ class ConfigFileSection(QWidget):
         if os.path.exists(get_config_path()):
             self.config_status_indicator.setText("● Found")
             self.config_status_indicator.setStyleSheet(
-                nvr_config_status_found_style
+                configuration_status_found_style
             )
         else:
             self.config_status_indicator.setText("● Not Found")
             self.config_status_indicator.setStyleSheet(
-                nvr_config_status_not_found_style
+                configuration_status_not_found_style
             )
 
     def generate_config_file(self):

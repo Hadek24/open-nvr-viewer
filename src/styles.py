@@ -225,7 +225,7 @@ configuration_title_style = """
 #####################################
 """
 
-nvr_section_title_style = """
+configuration_section_title_style = """
     QLabel {
         color: white;
         font-size: 16px;
@@ -234,7 +234,7 @@ nvr_section_title_style = """
     }
 """
 
-nvr_section_description_style = """
+configuration_section_description_style = """
     QLabel {
         color: #CCCCCC;
         font-size: 13px;
@@ -242,7 +242,7 @@ nvr_section_description_style = """
     }
 """
 
-nvr_subsection_title_style = """
+configuration_subsection_title_style = """
     QLabel {
         color: white;
         font-size: 14px;
@@ -251,7 +251,7 @@ nvr_subsection_title_style = """
     }
 """
 
-nvr_field_label_style = """
+configuration_field_label_style = """
     QLabel {
         color: white;
         font-size: 14px;
@@ -259,14 +259,14 @@ nvr_field_label_style = """
     }
 """
 
-nvr_separator_style = """
+configuration_separator_style = """
     QLabel {
         background-color: #555555;
         border: none;
     }
 """
 
-nvr_config_status_found_style = """
+configuration_status_found_style = """
     QLabel {
         color: #00FF00;
         font-size: 14px;
@@ -275,7 +275,7 @@ nvr_config_status_found_style = """
     }
 """
 
-nvr_config_status_not_found_style = """
+configuration_status_not_found_style = """
     QLabel {
         color: #F85149;
         font-size: 14px;
@@ -284,7 +284,7 @@ nvr_config_status_not_found_style = """
     }
 """
 
-nvr_profile_list_style = """
+configuration_profile_list_style = """
     QListWidget {
         color: white;
         font-size: 14px;

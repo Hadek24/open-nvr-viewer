@@ -61,12 +61,12 @@ from src.styles import (
     configuration_editing_label_style,
     configuration_field_style,
     configuration_scroll_area_style,
-    nvr_section_title_style,
-    nvr_section_description_style,
-    nvr_subsection_title_style,
-    nvr_field_label_style,
-    nvr_separator_style,
-    nvr_profile_list_style,
+    configuration_section_title_style,
+    configuration_section_description_style,
+    configuration_subsection_title_style,
+    configuration_field_label_style,
+    configuration_separator_style,
+    configuration_profile_list_style,
     connection_test_title_style,
     connection_test_pending_style,
     connection_test_success_style,
@@ -144,7 +144,7 @@ class ConnectionTestDialog(QDialog):
             status.setText(f"✗ Failed — {message}")
             status.setStyleSheet(connection_test_failure_style)
 
-class NVRSection(QWidget):
+class ProfilesSection(QWidget):
     """Manage NVR connection profiles and diagnostics."""
 
     def __init__(self, parent=None):
@@ -183,14 +183,14 @@ class NVRSection(QWidget):
         # -------------------------------------------------------------
 
         self.nvr_title = QLabel("Profiles")
-        self.nvr_title.setStyleSheet(nvr_section_title_style)
+        self.nvr_title.setStyleSheet(configuration_section_title_style)
 
         self.nvr_description = QLabel(
             "Create and manage connection profiles for your NVR devices. "
             "Each profile stores its own connection settings."
         )
         self.nvr_description.setWordWrap(True)
-        self.nvr_description.setStyleSheet(nvr_section_description_style)
+        self.nvr_description.setStyleSheet(configuration_section_description_style)
 
         self.right_layout.addWidget(self.nvr_title)
         self.right_layout.addWidget(self.nvr_description)
@@ -201,10 +201,10 @@ class NVRSection(QWidget):
 
         self.separator_2 = QLabel()
         self.separator_2.setFixedHeight(1)
-        self.separator_2.setStyleSheet(nvr_separator_style)
+        self.separator_2.setStyleSheet(configuration_separator_style)
 
         self.connection_title = QLabel("NVR Connection Configuration")
-        self.connection_title.setStyleSheet(nvr_subsection_title_style)
+        self.connection_title.setStyleSheet(configuration_subsection_title_style)
 
         self.right_layout.addSpacing(8)
         self.right_layout.addWidget(self.separator_2)
@@ -234,7 +234,7 @@ class NVRSection(QWidget):
 
             label = QLabel(label_text)
             label.setFixedWidth(190)
-            label.setStyleSheet(nvr_field_label_style)
+            label.setStyleSheet(configuration_field_label_style)
 
             field = QLineEdit()
             field.setFixedWidth(250)
@@ -286,10 +286,10 @@ class NVRSection(QWidget):
 
         self.separator_3 = QLabel()
         self.separator_3.setFixedHeight(1)
-        self.separator_3.setStyleSheet(nvr_separator_style)
+        self.separator_3.setStyleSheet(configuration_separator_style)
 
         self.profile_management_title = QLabel("Manage Connection Profiles")
-        self.profile_management_title.setStyleSheet(nvr_subsection_title_style)
+        self.profile_management_title.setStyleSheet(configuration_subsection_title_style)
 
         self.right_layout.addSpacing(12)
         self.right_layout.addWidget(self.separator_3)
@@ -301,7 +301,7 @@ class NVRSection(QWidget):
 
         self.active_profile_label = QLabel("Active Profile:")
         self.active_profile_label.setFixedWidth(190)
-        self.active_profile_label.setStyleSheet(nvr_field_label_style)
+        self.active_profile_label.setStyleSheet(configuration_field_label_style)
 
         self.active_profile_combo = QComboBox()
         self.active_profile_combo.setFixedWidth(250)
@@ -321,7 +321,7 @@ class NVRSection(QWidget):
 
         # Profile list
         self.profile_list_title = QLabel("Profile Management")
-        self.profile_list_title.setStyleSheet(nvr_subsection_title_style)
+        self.profile_list_title.setStyleSheet(configuration_subsection_title_style)
 
         self.right_layout.addSpacing(10)
         self.right_layout.addWidget(self.profile_list_title)
@@ -329,7 +329,7 @@ class NVRSection(QWidget):
         self.profile_list = QListWidget()
         self.profile_list.setFixedWidth(320)
         self.profile_list.setMinimumHeight(120)
-        self.profile_list.setStyleSheet(nvr_profile_list_style)
+        self.profile_list.setStyleSheet(configuration_profile_list_style)
 
         self.right_layout.addWidget(self.profile_list)
 
