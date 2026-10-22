@@ -65,7 +65,7 @@ from src.styles import (
 )
 
 # Connection diagnostics
-from src.connection_test import ConnectionTestThread
+from src.configuration_tab_section.connection_test import ConnectionTestThread
 
 # Import styles
 from src.styles import (
