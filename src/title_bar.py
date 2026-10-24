@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QGridLayout, QLabel, QHBoxLayout, QPushButton
+from src.resource_utils import resource_path
 
 class TitleBar(QWidget):
     def __init__(self, parent):
@@ -24,7 +25,8 @@ class TitleBar(QWidget):
         
         # Icono de barra de título
         self.title_icon = QLabel()
-        self.title_icon.setPixmap(QPixmap("resources/app_icon.png").scaled(22, 22, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        self.title_icon.setPixmap(
+        QPixmap(resource_path("resources/app_icon.png")).scaled(22, 22, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         self.title_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 

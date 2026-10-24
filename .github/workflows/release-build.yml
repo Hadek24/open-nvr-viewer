@@ -34,7 +34,7 @@ jobs:
 
       - name: Compilar ejecutable con PyInstaller
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --collect-all PyQt6 --name "open-nvr-viewer" main.py
+          pyinstaller --noconfirm --clean --onedir --windowed --collect-all PyQt6 --add-data "resources:resources" --name "open-nvr-viewer" main.py
 
       - name: Empaquetar en archivo Zip
         run: |
