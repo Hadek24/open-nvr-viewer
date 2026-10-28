@@ -1,0 +1,16 @@
+
+# ==================================================
+# Open NVR Viewer - Python Dependencies
+# ==================================================
+
+# GUI framework
+PyQt6
+
+# System monitoring
+psutil
+
+# Secure credential storage
+keyring
+
+# Backup encryption and cryptography
+cryptography

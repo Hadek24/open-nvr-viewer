@@ -239,6 +239,28 @@ def get_nvr_password(profile_name):
     except Exception:
         return None
 
+def get_nvr_password_for_backup(profile_name):
+    """Read a profile password for backup, allowing errors to propagate."""
+
+    password = keyring.get_password(KEYRING_SERVICE, profile_name)
+
+    if password is not None:
+        return password
+
+    # Preserve the legacy credential migration for the main profile.
+    if profile_name == "nvr-principal":
+        old_password = keyring.get_password(KEYRING_SERVICE, "nvr")
+
+        if old_password is not None:
+            keyring.set_password(
+                KEYRING_SERVICE,
+                profile_name,
+                old_password,
+            )
+            return old_password
+
+    return None
+
 def set_nvr_password(profile_name, password):
     """
     Guarda la contraseña del perfil en el keyring.

@@ -8,9 +8,9 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v2.0.0
+Current version — v2.1.0
 
-Version 2.0.0 introduces a redesigned configuration workflow, profile management, and the ability to start the application without an existing configuration file.
+Version 2.1.0 extends the configuration workflow introduced in version 2.0.0 with encrypted configuration backups, backup verification, and configuration restoration.
 
 ### Camera monitoring
 
@@ -35,6 +35,14 @@ The configuration workflow is managed through the graphical interface.
 * Check whether a configuration file exists and open its containing directory.
 * Start the application without an existing configuration file.
 
+### Configuration backup and restoration
+
+* Export the configuration and saved profile credentials to an encrypted backup file.
+* Protect backups with a user-defined master password.
+* Verify backup integrity and validate its contents before restoration.
+* Restore saved profiles and credentials from a valid backup.
+* Automatically restart the application after a successful restoration so the restored configuration is loaded.
+
 ### Connectivity tests
 
 The profile test currently checks:
@@ -47,9 +55,11 @@ The profile test currently checks:
 * Linux
 * Python 3.10 or later.
 * PyQt6
+* Psutil.
+* Cryptography for encrypted backups.
+* Keyring support for secure credential storage
 * FFmpeg libraries.
 * A compatible NVR/camera system providing RTSP streams
-* Python keyring support
 
 ## Installation
 
@@ -72,7 +82,12 @@ cd open-nvr-viewer
 Install the required system packages:
 ```bash
 sudo apt update
-sudo apt install ffmpeg libxcb-cursor0 python3-pyqt6 python3-psutil python3-keyring
+sudo apt install ffmpeg libxcb-cursor0 python3-pyqt6 python3-psutil python3-keyring python3-cryptography
+```
+
+Alternatively, install the Python dependencies using pip:
+```bash
+pip install -r requirements.txt
 ```
 
 Launch the application:
@@ -103,6 +118,20 @@ The application provides controls for creating, opening, and deleting its config
 
 Security note: protect access to your operating system account and credential store. Do not commit local configuration files or credentials to a public repository.
 
+## Encrypted configuration backups
+
+Open NVR Viewer supports exporting, verifying, and restoring encrypted configuration backups.
+
+* Export: Save the configuration and associated profile credentials to an encrypted .nvrbackup file.
+* Verify: Check the backup's integrity and validate its contents without changing the current configuration.
+* Import: Restore the configuration and profile credentials from a valid backup.
+
+Backups are protected with a user-defined master password. The application uses Scrypt for password-based key derivation and AES-256-GCM for authenticated encryption.
+
+Restoring a backup replaces the current configuration and updates the saved profile credentials. After a successful restoration, the application restarts to load the restored configuration.
+
+Keep the backup file and its master password secure. A backup cannot be restored without the correct master password.
+
 ## RTSP
 
 The application is designed for NVRs that expose streams through the /Streaming/Channels/ RTSP path convention.
@@ -124,21 +153,25 @@ Make sure RTSP access is enabled on the NVR and that the configured account has 
 
 ```text
 open-nvr-viewer/
+├── CODE_OF_CONDUCT.md
 ├── LICENSE
 ├── main.py
 ├── README.md
+├── requirements.txt
 ├── resources
 │   └── app_icon.png
 └── src
+    ├── __init__.py
     ├── camera_widget.py
     ├── config.py
     ├── configuration_tab.py
     ├── configuration_tab_section
     │   ├── __init__.py
-    │   └── nvr.py
-    ├── connection_test.py
-    ├── __init__.py
+    │   ├── config_file.py
+    │   ├── connection_test.py
+    │   └── profiles.py
     ├── main_window.py
+    ├── resource_utils.py
     ├── status_bar.py
     ├── styles.py
     ├── title_bar.py
@@ -157,7 +190,6 @@ Open NVR Viewer is an actively developed personal project. The application is in
 * Connectivity tests currently cover ping and TCP port reachability only.
 * Successful ping or TCP connectivity does not guarantee that RTSP authentication or video playback will work.
 * The application has primarily been developed for Linux. Other platforms may require additional testing.
-* Importing and exporting configuration files is not included in version 2.0.0.
 * The Playback tab is present but not implemented yet.
 
 ## License
