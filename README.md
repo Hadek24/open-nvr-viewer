@@ -8,9 +8,9 @@ The project began as a personal laboratory initiative to replace a complex video
 
 ## Features
 
-Current version — v2.1.0
+Current version — v2.2.0
 
-Version 2.1.0 extends the configuration workflow introduced in version 2.0.0 with encrypted configuration backups, backup verification, and configuration restoration.
+Version 2.2.0 extends the configuration workflow introduced in version 2.0.0 with encrypted configuration backups, backup verification, and configuration restoration.
 
 ### Camera monitoring
 
@@ -30,6 +30,9 @@ The configuration workflow is managed through the graphical interface.
 * Create, edit, activate, and delete NVR profiles.
 * Configure the NVR address, port, username, password, and channel count.
 * Select between multiple saved NVR profiles.
+* Assign an RTSP URL template to each NVR profile.
+* Manage custom RTSP templates from Configuration > RTSP; built-in generic examples are read-only in the GUI and are not guaranteed to work with every NVR.
+* Keep profiles and RTSP templates together in config.json so encrypted backups include both. 
 * Confirm passwords when creating or changing profile credentials.
 * Create and delete the configuration file from the application.
 * Check whether a configuration file exists and open its containing directory.
@@ -101,16 +104,28 @@ Depending on your Linux distribution, you may need to install additional system 
 1. Launch Open NVR Viewer.
 2. Open the Configuration tab.
 3. If no configuration file exists, use the configuration controls to create one.
-4. Create an NVR profile and enter its connection details.
-5. Confirm the password and save the profile.
-6. Activate the profile you want to use.
-7. Run the available connectivity tests.
-8. Return to the main view and select a grid layout.
+4. Open Configuration > RTSP and review the available URL templates, creating a custom template if needed.
+5. Create an NVR profile, enter its connection details, and select an RTSP template.
+6. Confirm the password and save the profile.
+7. Activate the profile you want to use.
+8. Run the available connectivity tests.
+9. Return to the main view and select a grid layout.
 
 The application can start without an existing configuration file. However, an NVR profile must be configured before the application can connect to an NVR.
 
 ## Configuration and credential storage
-The main configuration file is named config.json.
+The main configuration file is named config.json. It contains separate top-level sections for NVR profiles and RTSP templates. Profiles store a template ID, while the template catalog stores each URL format.
+
+RTSP URL templates can use these variables: `{username}`, `{password}`, `{ip}`, `{port}`, `{channel}`, `{stream}`, `{stream_index}`, `{stream_padded}`, and `{channel_code}`. The application substitutes these values when opening each camera stream.
+
+* `{username}`, `{password}`, `{ip}`, and `{port}`: values from the selected NVR profile.
+* `{channel}`: the selected channel number.
+* `{stream}`: `1` for the main stream and `2` for the substream.
+* `{stream_index}`: `0` for the main stream and `1` for the substream, for formats that use zero-based stream indexes.
+* `{stream_padded}`: `01` for the main stream and `02` for the substream.
+* `{channel_code}`: the channel number followed by `0` and the stream number, matching the URL format currently used by ONV.
+
+User-defined templates are included in encrypted configuration backups. 
 
 NVR passwords are stored using the operating system's credential storage through Python's keyring library rather than being saved as plaintext passwords in the JSON configuration file.
 

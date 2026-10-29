@@ -335,3 +335,29 @@ connection_test_failure_style = """
         border: none;
     }
 """
+
+# Configuration tab: RTSP template table
+rtsp_template_table_style = """
+    QTableWidget {
+        color: white;
+        font-size: 13px;
+        gridline-color: #666666;
+        border: 1px solid #666666;
+        border-radius: 4px;
+        background-color: #333333;
+        selection-background-color: #555555;
+        selection-color: white;
+    }
+
+    QTableWidget::item {
+        padding: 6px;
+    }
+
+    QHeaderView::section {
+        color: white;
+        font-weight: bold;
+        padding: 6px;
+        border: 1px solid #666666;
+        background-color: #292929;
+    }
+""" 

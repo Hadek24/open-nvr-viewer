@@ -6,6 +6,57 @@ import keyring
 APP_NAME = "open-nvr-viewer"
 KEYRING_SERVICE = "open-nvr-viewer"
 
+CONFIG_DESCRIPTION = (
+    "NINGUN PARAMETRO DEL ARCHIVO DEBERA SER MODIFICADO MANUALMENTE. "
+    "CUALQUIER CAMBIO REALIZADO AQUI PODRIA CONLLEVAR QUE EL PROGRAMA "
+    "DEJE DE FUNCIONAR. CUALQUIER ERROR INTRODUCIDO POR CAMBIOS MANUALES "
+    "NO SERA CUBIERTO NI REPARADO, YA QUE EL PROGRAMA FUE HECHO PARA "
+    "UTILIZARSE DESDE LA APLICACION. SI DESPUES DE UN CAMBIO MANUAL EL "
+    "PROGRAMA FALLA, RECOMENDAMOS ELIMINAR EL CONFIG.JSON, ABRIR EL "
+    "PROGRAMA Y CREAR UNA CONFIGURACION NUEVA."
+)
+
+# Built-in RTSP templates use neutral names and are managed by the application.
+# Template variables are expanded by CameraWidget when each stream is opened.
+BUILTIN_RTSP_TEMPLATES = [
+    {
+        "id": "builtin-rtsp-channel-code",
+        "name": "RTSP Channel Code",
+        "url_template": (
+            "rtsp://{username}:{password}@{ip}:{port}/"
+            "Streaming/channels/{channel_code}"
+        ),
+        "type": "builtin",
+    },
+    {
+        "id": "builtin-rtsp-path-stream",
+        "name": "RTSP Path Stream",
+        "url_template": (
+            "rtsp://{username}:{password}@{ip}:{port}/"
+            "live/{channel}/{stream_index}"
+        ),
+        "type": "builtin",
+    },
+    {
+        "id": "builtin-rtsp-query-stream",
+        "name": "RTSP Query Stream",
+        "url_template": (
+            "rtsp://{username}:{password}@{ip}:{port}/stream"
+            "?channel={channel}&subtype={stream_index}"
+        ),
+        "type": "builtin",
+    },
+    {
+        "id": "builtin-rtsp-channel-suffix",
+        "name": "RTSP Channel Suffix",
+        "url_template": (
+            "rtsp://{username}:{password}@{ip}:{port}/"
+            "channels/{channel}{stream_padded}"
+        ),
+        "type": "builtin",
+    },
+]
+
 def get_config_dir():
     """
     Devuelve el directorio donde se almacenará la configuración
@@ -44,8 +95,10 @@ def create_config():
     os.makedirs(config_dir, exist_ok=True)
 
     config = {
+        "description": CONFIG_DESCRIPTION,
         "active_profile": None,
-        "profiles": {}
+        "profiles": {},
+        "rtsp_templates": [template.copy() for template in BUILTIN_RTSP_TEMPLATES],
     }
 
     with open(config_path, "w", encoding="utf-8") as f:
@@ -59,13 +112,15 @@ def migrate_old_config(old_config):
     profile_id = "nvr-principal"
 
     new_config = {
+        "description": CONFIG_DESCRIPTION,
         "active_profile": profile_id,
         "profiles": {
             profile_id: {
                 "name": "NVR principal",
                 **old_config
             }
-        }
+        },
+        "rtsp_templates": [template.copy() for template in BUILTIN_RTSP_TEMPLATES],
     }
     return new_config
 
@@ -81,6 +136,57 @@ def load_raw_config():
 
     with open(config_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+def ensure_rtsp_templates(config):
+    """Add missing built-in RTSP templates and default profile references.
+
+    User-defined templates remain in the same config.json file as profiles.
+    Existing template definitions are not rewritten, including manual edits.
+    """
+    changed = False
+    templates = config.get("rtsp_templates")
+
+    if not isinstance(templates, list):
+        templates = []
+        config["rtsp_templates"] = templates
+        changed = True
+
+    existing_ids = {
+        item.get("id")
+        for item in templates
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+
+    for builtin in BUILTIN_RTSP_TEMPLATES:
+        if builtin["id"] not in existing_ids:
+            templates.append(builtin.copy())
+            changed = True
+
+    profiles = config.get("profiles", {})
+    if isinstance(profiles, dict):
+        default_template_id = BUILTIN_RTSP_TEMPLATES[0]["id"]
+        for profile in profiles.values():
+            if isinstance(profile, dict) and not profile.get("RTSP_TEMPLATE_ID"):
+                profile["RTSP_TEMPLATE_ID"] = default_template_id
+                changed = True
+
+    if not config.get("description"):
+        config["description"] = CONFIG_DESCRIPTION
+        changed = True
+
+    return changed
+
+def get_rtsp_templates():
+    """Return the RTSP templates stored in config.json, or built-ins if absent."""
+    config = load_raw_config()
+    if not isinstance(config, dict):
+        return [template.copy() for template in BUILTIN_RTSP_TEMPLATES]
+
+    if ensure_rtsp_templates(config):
+        save_raw_config(config)
+
+    templates = config.get("rtsp_templates", [])
+    return [item.copy() for item in templates if isinstance(item, dict)]
 
 def load_config():
     """
@@ -99,6 +205,9 @@ def load_config():
 
         save_raw_config(config)
 
+    if ensure_rtsp_templates(config):
+        save_raw_config(config)
+
     active_profile = config.get("active_profile")
     profiles = config.get("profiles", {})
 
@@ -107,6 +216,18 @@ def load_config():
         return None
 
     profile = profiles[active_profile].copy()
+
+    # Resolve the selected template for the video player without persisting
+    # the expanded value back into the profile.
+    template_id = profile.get("RTSP_TEMPLATE_ID")
+    templates = config.get("rtsp_templates", [])
+    template = next(
+        (item for item in templates
+         if isinstance(item, dict) and item.get("id") == template_id),
+        None,
+    )
+    if template:
+        profile["RTSP_URL_TEMPLATE"] = template.get("url_template", "")
 
     password = get_nvr_password(active_profile)
 
@@ -155,6 +276,9 @@ def save_config(config):
         return False
 
     config_to_save = config.copy()
+
+    # Runtime-only values are resolved from the selected template and keyring.
+    config_to_save.pop("RTSP_URL_TEMPLATE", None)
 
     # Nunca guardar la contraseña en config.json.
     password = config_to_save.pop("NVR_PASS", None)
@@ -286,6 +410,7 @@ def get_default_profile():
         "NVR_PORT": "554",
         "TOTAL_CHANNELS": 16,
         "LAST_GRID_SIZE": 2,
+        "RTSP_TEMPLATE_ID": BUILTIN_RTSP_TEMPLATES[0]["id"],
         "GRID_MAPPINGS": {
             "1": ["Vacío"],
             "2": ["Vacío", "Vacío", "Vacío", "Vacío"],

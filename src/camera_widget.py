@@ -1,4 +1,5 @@
 from PyQt6.QtCore import QTimer, Qt
+from urllib.parse import quote 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QComboBox, QLabel, QGraphicsDropShadowEffect
 from src.video_thread import FFmpegThread
 from src.video_frame import VideoFrame
@@ -105,8 +106,34 @@ class CameraWidget(QWidget):
             return
         self.stop_stream()
         self.set_status("Conectando...", "orange")
+        stream_index = "0" if stream_type == "1" else "1"
+        stream_padded = "01" if stream_type == "1" else "02"
         channel_code = f"{self.current_channel}0{stream_type}"
-        url = f"rtsp://{self.config['NVR_USER']}:{self.config['NVR_PASS']}@{self.config['NVR_IP']}:{self.config['NVR_PORT']}/Streaming/channels/{channel_code}"
+        template = self.config.get("RTSP_URL_TEMPLATE")
+
+        if not template:
+            self.set_status("RTSP sin configurar", "red")
+            return
+
+        # Encode credential components so reserved URL characters in a
+        # username/password do not corrupt the RTSP URL structure.
+        template_values = {
+            "username": quote(str(self.config.get("NVR_USER", "")), safe=""),
+            "password": quote(str(self.config.get("NVR_PASS", "")), safe=""),
+            "ip": str(self.config.get("NVR_IP", "")),
+            "port": str(self.config.get("NVR_PORT", "554")),
+            "channel": str(self.current_channel),
+            "stream": str(stream_type),
+            "stream_index": stream_index,
+            "stream_padded": stream_padded,
+            "channel_code": channel_code,
+        }
+        try:
+            url = template.format_map(template_values)
+        except (KeyError, ValueError) as error:
+            print(f"Error en plantilla RTSP: {error}")
+            self.set_status("Plantilla RTSP inválida", "red")
+            return
         if stream_type == "1":
             width, height = 2560, 1440
         else:

@@ -6,7 +6,7 @@ Ventana de configuración general de Open NVR Viewer.
 Responsabilidades:
 - Construir el panel de navegación izquierdo.
 - Construir el contenedor de contenido derecho.
-- Integrar las secciones de configuración, actualmente NVRSection.
+- Integrar las secciones de configuración, Config File, Profiles y RTSP.
 
 La gestión de las diferentes opciones están separadas en módulos propios.
 """
@@ -32,6 +32,7 @@ from src.styles import (
 
 from src.configuration_tab_section.profiles import ProfilesSection
 from src.configuration_tab_section.config_file import ConfigFileSection
+from src.configuration_tab_section.rtsp import RTSPSection
 
 # ---------------------------------------------------------------------
 # ConfigurationTab
@@ -75,7 +76,7 @@ class ConfigurationTab(QWidget):
         # Botones de navegación
         self.config_file_button = QPushButton("Config File")
         self.profiles_button = QPushButton("Profiles")
-        self.option1_button = QPushButton("RTSP")
+        self.rtsp_button = QPushButton("RTSP")
         self.option2_button = QPushButton("TSHOOT")
         self.option3_button = QPushButton("CAMARAS")
         self.option4_button = QPushButton("UPGRADE")
@@ -85,7 +86,7 @@ class ConfigurationTab(QWidget):
         navigation_buttons = [
             self.config_file_button,
             self.profiles_button,
-            self.option1_button,
+            self.rtsp_button,
             self.option2_button,
             self.option3_button,
             self.option4_button,
@@ -117,8 +118,10 @@ class ConfigurationTab(QWidget):
         self.sections_stack = QStackedWidget()
         self.config_file_section = ConfigFileSection()
         self.profiles_section = ProfilesSection()
+        self.rtsp_section = RTSPSection()
         self.sections_stack.addWidget(self.config_file_section)
         self.sections_stack.addWidget(self.profiles_section)
+        self.sections_stack.addWidget(self.rtsp_section)
 
         # El panel derecho contiene únicamente el contenedor de secciones.
         self.right_panel_layout.addWidget(self.sections_stack)
@@ -133,8 +136,12 @@ class ConfigurationTab(QWidget):
             lambda: self.sections_stack.setCurrentWidget(self.config_file_section)
         )
 
-        self.profiles_button.clicked.connect(
-            lambda: self.sections_stack.setCurrentWidget(self.profiles_section)
+        self.profiles_button.clicked.connect(self.show_profiles_section)
+        self.rtsp_button.clicked.connect(
+            lambda: self.sections_stack.setCurrentWidget(self.rtsp_section)
+        )
+        self.rtsp_section.templates_changed.connect(
+            self.profiles_section.load_rtsp_templates
         )
 
         # =============================================================
@@ -143,3 +150,8 @@ class ConfigurationTab(QWidget):
 
         self.layout.addWidget(self.left_panel, 1)
         self.layout.addWidget(self.right_panel, 3)
+
+    def show_profiles_section(self):
+        """Refresh RTSP choices before displaying the profile editor."""
+        self.profiles_section.load_rtsp_templates()
+        self.sections_stack.setCurrentWidget(self.profiles_section)

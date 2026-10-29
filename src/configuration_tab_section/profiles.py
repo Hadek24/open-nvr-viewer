@@ -44,6 +44,7 @@ from src.config import (
     get_profiles,
     delete_profile,
     get_active_profile,
+    get_rtsp_templates,
     set_active_profile,
     get_default_profile,
     get_nvr_password,
@@ -251,6 +252,19 @@ class ProfilesSection(QWidget):
 
             self.right_layout.addLayout(row)
 
+        # RTSP template selector: each profile stores a stable template ID.
+        self.rtsp_template_layout = QHBoxLayout()
+        self.rtsp_template_label = QLabel("NVR RTSP template:")
+        self.rtsp_template_label.setFixedWidth(190)
+        self.rtsp_template_label.setStyleSheet(configuration_field_label_style)
+        self.rtsp_template_combo = QComboBox()
+        self.rtsp_template_combo.setFixedWidth(320)
+        self.rtsp_template_layout.addWidget(self.rtsp_template_label)
+        self.rtsp_template_layout.addWidget(self.rtsp_template_combo)
+        self.rtsp_template_layout.addStretch()
+        self.right_layout.addLayout(self.rtsp_template_layout)
+        self.load_rtsp_templates()
+
         # Profile creation and editing buttons
         self.create_profile_button = QPushButton("Create")
         self.create_profile_button.clicked.connect(self.create_new_profile)
@@ -368,6 +382,21 @@ class ProfilesSection(QWidget):
     # Connection profile loading
     # -----------------------------------------------------------------
 
+    def load_rtsp_templates(self):
+        """Populate the profile editor with available RTSP template names."""
+        selected_id = self.rtsp_template_combo.currentData()
+        self.rtsp_template_combo.blockSignals(True)
+        self.rtsp_template_combo.clear()
+        for template in get_rtsp_templates():
+            template_id = template.get("id")
+            template_name = template.get("name", template_id or "Unnamed template")
+            if template_id:
+                self.rtsp_template_combo.addItem(template_name, template_id)
+        index = self.rtsp_template_combo.findData(selected_id)
+        if index >= 0:
+            self.rtsp_template_combo.setCurrentIndex(index)
+        self.rtsp_template_combo.blockSignals(False)
+
     def load_profiles(self):
         """Load available profiles into the profile selection controls."""
         profiles = get_profiles()
@@ -470,6 +499,12 @@ class ProfilesSection(QWidget):
         self.nvr_ip.setText(profile_data.get("NVR_IP", ""))
         self.nvr_port.setText(str(profile_data.get("NVR_PORT", "")))
         self.nvr_channels.setText(str(profile_data.get("TOTAL_CHANNELS", "")))
+        self.load_rtsp_templates()
+        rtsp_index = self.rtsp_template_combo.findData(
+            profile_data.get("RTSP_TEMPLATE_ID")
+        )
+        if rtsp_index >= 0:
+            self.rtsp_template_combo.setCurrentIndex(rtsp_index)
 
         # Switch the form to editing mode.
         self.editing_profile_label.setText(f"Editing profile: {profile_name}")
@@ -652,6 +687,9 @@ class ProfilesSection(QWidget):
         profile_data["NVR_IP"] = nvr_ip
         profile_data["NVR_PORT"] = nvr_port
         profile_data["TOTAL_CHANNELS"] = int(nvr_channels)
+        selected_template_id = self.rtsp_template_combo.currentData()
+        if selected_template_id:
+            profile_data["RTSP_TEMPLATE_ID"] = selected_template_id
 
         if not update_profile(profile_id, profile_data):
             QMessageBox.critical(
@@ -719,6 +757,9 @@ class ProfilesSection(QWidget):
         self.nvr_ip.clear()
         self.nvr_port.clear()
         self.nvr_channels.clear()
+        self.load_rtsp_templates()
+        if self.rtsp_template_combo.count():
+            self.rtsp_template_combo.setCurrentIndex(0)
 
         # Restore the profile creation controls.
         self.editing_profile_label.hide()
@@ -838,6 +879,9 @@ class ProfilesSection(QWidget):
         profile_data["NVR_IP"] = nvr_ip
         profile_data["NVR_PORT"] = nvr_port
         profile_data["TOTAL_CHANNELS"] = int(nvr_channels)
+        selected_template_id = self.rtsp_template_combo.currentData()
+        if selected_template_id:
+            profile_data["RTSP_TEMPLATE_ID"] = selected_template_id
 
         if not create_profile(profile_id, profile_data):
             print("Error al crear el perfil")
@@ -857,6 +901,9 @@ class ProfilesSection(QWidget):
         self.nvr_ip.clear()
         self.nvr_port.clear()
         self.nvr_channels.clear()
+        self.load_rtsp_templates()
+        if self.rtsp_template_combo.count():
+            self.rtsp_template_combo.setCurrentIndex(0)
 
         print(f"Perfil creado correctamente: {profile_name}")
 
