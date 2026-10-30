@@ -131,6 +131,15 @@ class RTSPSection(QWidget):
         self.actions_layout.addStretch()
         self.content_layout.addLayout(self.actions_layout)
 
+        # Separador entre la administración de plantillas y los detalles RTSP.
+        self.separator = QLabel()
+        self.separator.setFixedHeight(1)
+        self.separator.setStyleSheet(configuration_separator_style)
+
+        self.content_layout.addSpacing(8)
+        self.content_layout.addWidget(self.separator)
+        self.content_layout.addSpacing(8)
+
         self.editor_title = QLabel("RTSP URL Details")
         self.editor_title.setStyleSheet(configuration_subsection_title_style)
         self.content_layout.addSpacing(8)
