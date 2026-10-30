@@ -1,8 +1,8 @@
 from PyQt6.QtCore import QTimer, Qt
 from urllib.parse import quote 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QComboBox, QLabel, QGraphicsDropShadowEffect
-from src.video_thread import FFmpegThread
-from src.video_frame import VideoFrame
+from src.main_view_tab_section.video_thread import FFmpegThread
+from src.main_view_tab_section.video_frame import VideoFrame
 
 class HoverAwareComboBox(QComboBox):
     def __init__(self, owner, parent=None):

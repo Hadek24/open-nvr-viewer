@@ -2,7 +2,7 @@ from src.config import load_config, save_config, get_default_profile
 from PyQt6.QtCore import Qt, QPoint, QEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QGridLayout, QTabWidget, QLabel, QPushButton, QSizeGrip
 from PyQt6.QtGui import QPainter, QLinearGradient, QColor, QCursor
-from src.camera_widget import CameraWidget
+from src.main_view_tab_section.camera_widget import CameraWidget
 from src.styles import main_windows_style
 from src.title_bar import TitleBar
 from src.status_bar import StatusBar
