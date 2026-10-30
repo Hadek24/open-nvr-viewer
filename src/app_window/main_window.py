@@ -3,8 +3,8 @@ from PyQt6.QtCore import Qt, QPoint, QEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget
 from PyQt6.QtGui import QCursor
 from src.styles import main_windows_style
-from src.title_bar import TitleBar
-from src.status_bar import StatusBar
+from src.app_window.title_bar import TitleBar
+from src.app_window.status_bar import StatusBar
 from src.main_view_tab import MainViewTab
 from src.configuration_tab import ConfigurationTab
 
