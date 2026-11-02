@@ -4,13 +4,9 @@ Open NVR Viewer is a lightweight desktop application for viewing RTSP camera str
 
 ## What does it solve?
 
-The project began as a personal laboratory initiative to replace a complex video surveillance client with a simpler application, focusing on the features actually needed for daily monitoring. Additionally, the original application lacked a version compatible with Linux.
+The project began as a personal laboratory initiative to replace a complex video surveillance client with a simpler application, focusing on the features actually needed for daily monitoring. Additionally, the original application lacked a version compatible with Windows.
 
 ## Features
-
-Current version — v2.2.0
-
-Version 2.2.0 extends the configuration workflow introduced in version 2.0.0 with encrypted configuration backups, backup verification, and configuration restoration.
 
 ### Camera monitoring
 
@@ -177,21 +173,31 @@ open-nvr-viewer/
 │   └── app_icon.png
 └── src
     ├── __init__.py
-    ├── camera_widget.py
+    ├── app_window
+    │   ├── __init__.py
+    │   ├── main_window.py
+    │   ├── resource_utils.py
+    │   ├── status_bar.py
+    │   └── title_bar.py
     ├── config.py
     ├── configuration_tab.py
     ├── configuration_tab_section
     │   ├── __init__.py
     │   ├── config_file.py
     │   ├── connection_test.py
-    │   └── profiles.py
-    ├── main_window.py
-    ├── resource_utils.py
-    ├── status_bar.py
-    ├── styles.py
-    ├── title_bar.py
-    ├── video_frame.py
-    └── video_thread.py
+    │   ├── local_users.py
+    │   ├── profiles.py
+    │   └── rtsp.py
+    ├── main_view_tab.py
+    ├── main_view_tab_section
+    │   ├── __init__.py
+    │   ├── camera_widget.py
+    │   ├── video_frame.py
+    │   └── video_thread.py
+    ├── playback_tab.py
+    ├── playback_tab_section
+    │   └── __init__.py
+    └── styles.py
 ```
 
 ## Project Status
