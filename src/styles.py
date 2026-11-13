@@ -361,3 +361,42 @@ rtsp_template_table_style = """
         background-color: #292929;
     }
 """ 
+
+# Configuration tab: Local users template table
+local_user_field_style = """
+    QLineEdit {
+        color: #000000;
+        font-size: 14px;
+        padding: 5px 8px;
+        border: 1px solid #999999;
+        border-radius: 4px;
+        background-color: #FFFFFF;
+    }
+
+    QLineEdit:focus {
+        border: 1px solid #555555;
+    }
+"""
+
+local_user_combo_style = """
+    QComboBox {
+        color: #000000;
+        font-size: 14px;
+        padding: 5px 8px;
+        border: 1px solid #999999;
+        border-radius: 4px;
+        background-color: #FFFFFF;
+    }
+
+    QComboBox:focus {
+        border: 1px solid #555555;
+    }
+
+    QComboBox QAbstractItemView {
+        color: #000000;
+        background-color: #FFFFFF;
+        selection-color: #000000;
+        selection-background-color: #D9E2F0;
+        border: 1px solid #999999;
+    }
+"""

@@ -563,24 +563,36 @@ def update_profile(profile_id, profile_data):
 
     return True
 
+
 def delete_profile(profile_id):
     """
     Elimina un perfil existente.
-    No permite eliminar el perfil actualmente activo.
+
+    No permite eliminar el perfil actualmente activo
+    ni perfiles asignados a usuarios locales.
     """
     config = load_raw_config()
 
     if config is None:
-        return False
+        return "CONFIG_ERROR"
 
     profiles = config.get("profiles", {})
     active_profile = config.get("active_profile")
 
     if profile_id not in profiles:
-        return False
+        return "NOT_FOUND"
 
     if profile_id == active_profile:
-        return False
+        return "ACTIVE_PROFILE"
+
+    # Prevent deletion if local users are assigned to this profile.
+    from src.user_manager import UserManager
+
+    user_manager = UserManager()
+
+    for user in user_manager.list_users():
+        if user["assigned_profile"] == profile_id:
+            return "ASSIGNED_TO_USERS"
 
     del profiles[profile_id]
 
@@ -591,4 +603,5 @@ def delete_profile(profile_id):
     except Exception:
         pass
 
-    return True
+    return "SUCCESS"
+

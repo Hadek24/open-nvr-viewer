@@ -33,6 +33,7 @@ from src.styles import (
 from src.configuration_tab_section.profiles import ProfilesSection
 from src.configuration_tab_section.config_file import ConfigFileSection
 from src.configuration_tab_section.rtsp import RTSPSection
+from src.configuration_tab_section.local_users import LocalUsersSection
 
 # ---------------------------------------------------------------------
 # ConfigurationTab
@@ -77,6 +78,7 @@ class ConfigurationTab(QWidget):
         self.config_file_button = QPushButton("Config File")
         self.profiles_button = QPushButton("Profiles")
         self.rtsp_button = QPushButton("RTSP")
+        self.local_users_button = QPushButton("Local Users")
         self.option2_button = QPushButton("TSHOOT")
         self.option3_button = QPushButton("CAMARAS")
         self.option4_button = QPushButton("UPGRADE")
@@ -87,6 +89,7 @@ class ConfigurationTab(QWidget):
             self.config_file_button,
             self.profiles_button,
             self.rtsp_button,
+            self.local_users_button,
             self.option2_button,
             self.option3_button,
             self.option4_button,
@@ -119,9 +122,11 @@ class ConfigurationTab(QWidget):
         self.config_file_section = ConfigFileSection()
         self.profiles_section = ProfilesSection()
         self.rtsp_section = RTSPSection()
+        self.local_users_section = LocalUsersSection()
         self.sections_stack.addWidget(self.config_file_section)
         self.sections_stack.addWidget(self.profiles_section)
         self.sections_stack.addWidget(self.rtsp_section)
+        self.sections_stack.addWidget(self.local_users_section)
 
         # El panel derecho contiene únicamente el contenedor de secciones.
         self.right_panel_layout.addWidget(self.sections_stack)
@@ -142,6 +147,12 @@ class ConfigurationTab(QWidget):
         )
         self.rtsp_section.templates_changed.connect(
             self.profiles_section.load_rtsp_templates
+        )
+
+        self.local_users_button.clicked.connect(
+            lambda: self.sections_stack.setCurrentWidget(
+                self.local_users_section
+            )
         )
 
         # =============================================================

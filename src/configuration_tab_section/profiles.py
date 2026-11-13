@@ -767,6 +767,7 @@ class ProfilesSection(QWidget):
         self.save_profile_button.hide()
         self.cancel_edit_button.hide()
 
+
     # -----------------------------------------------------------------
     # Delete connection profiles
     # -----------------------------------------------------------------
@@ -798,12 +799,49 @@ class ProfilesSection(QWidget):
         if reply != QMessageBox.StandardButton.Ok:
             return
 
-        if not delete_profile(profile_id):
+        result = delete_profile(profile_id)
+
+        if result == "ACTIVE_PROFILE":
             QMessageBox.critical(
                 self,
                 "Delete Profile",
-                "The profile could not be deleted.\n\n"
-                "Make sure the selected profile is not the active profile.",
+                "The selected profile cannot be deleted because it is "
+                "currently active.",
+            )
+            return
+
+        if result == "ASSIGNED_TO_USERS":
+            QMessageBox.critical(
+                self,
+                "Delete Profile",
+                "The selected profile cannot be deleted because it is "
+                "currently assigned to one or more local users.\n\n"
+                "Reassign those users to another profile before attempting "
+                "to delete this profile.",
+            )
+            return
+
+        if result == "NOT_FOUND":
+            QMessageBox.critical(
+                self,
+                "Delete Profile",
+                "The selected profile no longer exists.",
+            )
+            return
+
+        if result == "CONFIG_ERROR":
+            QMessageBox.critical(
+                self,
+                "Delete Profile",
+                "The configuration could not be loaded.",
+            )
+            return
+
+        if result != "SUCCESS":
+            QMessageBox.critical(
+                self,
+                "Delete Profile",
+                "An unexpected error occurred while deleting the profile.",
             )
             return
 
