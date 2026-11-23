@@ -1,5 +1,7 @@
 import json
 import os
+import uuid
+import shutil
 from argon2 import PasswordHasher
 from argon2.exceptions import (
     InvalidHashError,
@@ -24,11 +26,85 @@ class UserManager:
     def _initialize_file(self):
         if not os.path.exists(self.users_path):
             initial_data = {
-                "version": 1,
+                "version": 2,
                 "users": {}
             }
 
             self._save_data(initial_data)
+
+
+    def _migrate_v1_to_v2(self, data):
+        users = data.get("users")
+
+        if not isinstance(users, dict):
+            raise ValueError("Invalid users.json structure")
+
+        backup_path = self.users_path + ".v1.bak"
+
+        if os.path.exists(backup_path):
+            raise ValueError(
+                "Migration backup already exists. "
+                "Manual verification is required."
+            )
+
+        migrated_data = {
+            "version": 2,
+            "users": {}
+        }
+
+        # Validate every existing user before migration
+        for username, user_data in users.items():
+
+            try:
+                self._validate_username(username)
+            except (AttributeError, ValueError):
+                raise ValueError("Invalid username in users.json")
+
+            if not isinstance(user_data, dict):
+                raise ValueError(f"Invalid data for user: {username}")
+
+            password_hash = user_data.get("password_hash")
+
+            try:
+                self._validate_password_hash(password_hash)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid password hash for user: {username}"
+                )
+
+            if user_data.get("role") not in (
+                "Administrator",
+                "Viewer"
+            ):
+                raise ValueError(f"Invalid role for user: {username}")
+
+            assigned_profile = user_data.get("assigned_profile")
+
+            if (
+                not isinstance(assigned_profile, str)
+                or not assigned_profile.strip()
+            ):
+                raise ValueError(
+                    f"Invalid assigned profile for user: {username}"
+                )
+
+            if not isinstance(user_data.get("enabled"), bool):
+                raise ValueError(
+                    f"Invalid enabled status for user: {username}"
+                )
+
+            migrated_user = user_data.copy()
+            migrated_user["id"] = str(uuid.uuid4())
+
+            migrated_data["users"][username] = migrated_user
+
+        # Preserve original file only after all users are validated
+        shutil.copy2(self.users_path, backup_path)
+
+        # Atomic replacement through _save_data()
+        self._save_data(migrated_data)
+
+        return migrated_data
 
     def load_users(self):
         with open(self.users_path, "r", encoding="utf-8") as file:
@@ -37,7 +113,12 @@ class UserManager:
         if not isinstance(data, dict):
             raise ValueError("Invalid users.json structure")
 
-        if data.get("version") != 1:
+        version = data.get("version")
+
+        if version == 1:
+            data = self._migrate_v1_to_v2(data)
+
+        elif version != 2:
             raise ValueError("Unsupported users.json version")
 
         users = data.get("users")
@@ -55,6 +136,13 @@ class UserManager:
             if not isinstance(user, dict):
                 raise ValueError(f"Invalid data for user: {username}")
 
+            user_id = user.get("id")
+
+            try:
+                uuid.UUID(user_id)
+            except (ValueError, TypeError, AttributeError):
+                raise ValueError(f"Invalid user ID for user: {username}")
+
             password_hash = user.get("password_hash")
 
             try:
@@ -62,13 +150,29 @@ class UserManager:
             except ValueError:
                 raise ValueError(f"Invalid password hash for user: {username}")
 
-            if user.get("role") not in ("Administrator", "Viewer"):
+            if user.get("role") not in (
+                "Superadmin",
+                "Administrator",
+                "Viewer"
+            ):
                 raise ValueError(f"Invalid role for user: {username}")
 
             assigned_profile = user.get("assigned_profile")
 
-            if not isinstance(assigned_profile, str) or not assigned_profile.strip():
-                raise ValueError(f"Invalid assigned profile for user: {username}")
+            if user.get("role") == "Superadmin":
+                if assigned_profile is not None:
+                    raise ValueError(
+                        f"Superadmin cannot have an assigned profile: {username}"
+                    )
+
+            else:
+                if (
+                    not isinstance(assigned_profile, str)
+                    or not assigned_profile.strip()
+                ):
+                    raise ValueError(
+                        f"Invalid assigned profile for user: {username}"
+                    )
 
             if not isinstance(user.get("enabled"), bool):
                 raise ValueError(f"Invalid enabled status for user: {username}")
@@ -81,6 +185,7 @@ class UserManager:
 
         for username, user_data in data["users"].items():
             users.append({
+                "id": user_data["id"],
                 "username": username,
                 "role": user_data["role"],
                 "assigned_profile": user_data["assigned_profile"],
@@ -134,6 +239,11 @@ class UserManager:
 
         role = self._validate_role(role)
 
+        if role == "Superadmin":
+            raise ValueError(
+                "Superadmin cannot be created through normal user registration"
+            )
+
         if not assigned_profile:
             raise ValueError("Assigned profile is required")
 
@@ -148,6 +258,7 @@ class UserManager:
 
         # Create user record
         users[username] = {
+            "id": str(uuid.uuid4()),
             "password_hash": self.hash_password(password),
             "role": role,
             "assigned_profile": assigned_profile,
@@ -178,8 +289,18 @@ class UserManager:
         if username not in users:
             raise ValueError("User does not exist")
 
+        user_data = users[username]
+
+        if user_data.get("role") == "Superadmin":
+            raise ValueError("Superadmin cannot be modified")
+
         # Validate role
         role = self._validate_role(role)
+
+        if role == "Superadmin":
+            raise ValueError(
+                "Users cannot be promoted to Superadmin through normal editing"
+            )
 
         # Validate assigned profile
         if not assigned_profile:
@@ -190,9 +311,6 @@ class UserManager:
             if existing_username != username:
                 if existing_username.casefold() == new_username.casefold():
                     raise ValueError("Username already exists")
-
-        # Update user data
-        user_data = users[username]
 
         # Prevent removing the last active administrator
         was_enabled_admin = (
@@ -274,6 +392,9 @@ class UserManager:
 
         user = users[username]
 
+        if user.get("role") == "Superadmin":
+            raise ValueError("Superadmin cannot be deleted")
+
         if (
             user.get("role") == "Administrator"
             and user.get("enabled", False)
@@ -307,7 +428,11 @@ class UserManager:
         return enabled
 
     def _validate_role(self, role):
-        if role not in ("Administrator", "Viewer"):
+        if role not in (
+            "Superadmin",
+            "Administrator",
+            "Viewer"
+        ):
             raise ValueError("Invalid user role")
 
         return role
