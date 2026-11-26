@@ -1,4 +1,13 @@
-from src.config import load_config, get_default_profile
+from src.config import (
+    load_config,
+    get_default_profile,
+    get_active_profile,
+    load_raw_config,
+    save_raw_config,
+    remove_legacy_grid_settings,
+)
+from src.user_manager import UserManager
+from src.status_manager import StatusManager
 from PyQt6.QtCore import Qt, QPoint, QEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget
 from PyQt6.QtGui import QCursor
@@ -22,6 +31,34 @@ class MainWindow(QMainWindow):
         if self.config is None:
             self.config = get_default_profile()
             self.config["name"] = "--"
+
+        # Transitional identity until the login/session flow is integrated:
+        # use the existing local account UUID rather than inventing another ID.
+        users = UserManager().list_users()
+        if not users:
+            raise RuntimeError(
+                "No local user exists. Create the initial user before starting the viewer."
+            )
+        enabled_users = [user for user in users if user["enabled"]]
+        selected_user = (enabled_users or users)[0]
+        self.user_id = selected_user["id"]
+
+        self.profile_id = get_active_profile() or "nvr-principal"
+
+        # Migrate every profile's legacy grid state before removing it from
+        # config.json. The migration is retry-safe: existing status entries win.
+        raw_config = load_raw_config()
+        if isinstance(raw_config, dict):
+            StatusManager().migrate_legacy_grid_state(
+                self.user_id,
+                raw_config,
+            )
+            if remove_legacy_grid_settings(raw_config):
+                save_raw_config(raw_config)
+
+        # Remove legacy fields from the in-memory profile as well.
+        self.config.pop("LAST_GRID_SIZE", None)
+        self.config.pop("GRID_MAPPINGS", None)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget)
@@ -34,7 +71,11 @@ class MainWindow(QMainWindow):
         
         self.tabs = QTabWidget()
         self.main_layout.addWidget(self.tabs)
-        self.main_view = MainViewTab(self.config) #Pestaña "Main View"
+        self.main_view = MainViewTab(
+            self.config,
+            self.user_id,
+            self.profile_id,
+        ) # Pestaña "Main View"
         self.tabs.addTab(self.main_view, "Main View")
         self.playback_view = QWidget() #Pestaña "Playback"
         self.tabs.addTab(self.playback_view, "Playback")

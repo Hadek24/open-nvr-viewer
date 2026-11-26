@@ -1,5 +1,4 @@
 import sys
-import json
 import os
 import keyring
 
@@ -89,20 +88,23 @@ def create_config():
     """
     Crea un config.json vacío con la estructura inicial.
     """
-    config_dir = get_config_dir()
-    config_path = get_config_path()
 
-    os.makedirs(config_dir, exist_ok=True)
+    from src.storage import ensure_config_dir, save_json
+
+    config_dir = ensure_config_dir()
+    config_path = os.path.join(config_dir, "config.json")
 
     config = {
         "description": CONFIG_DESCRIPTION,
         "active_profile": None,
         "profiles": {},
-        "rtsp_templates": [template.copy() for template in BUILTIN_RTSP_TEMPLATES],
+        "rtsp_templates": [
+            template.copy()
+            for template in BUILTIN_RTSP_TEMPLATES
+        ],
     }
 
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=4, ensure_ascii=False)
+    save_json(config_path, config)
 
 def migrate_old_config(old_config):
     """
@@ -129,13 +131,15 @@ def load_raw_config():
     Carga el contenido completo de config.json sin resolver
     el perfil activo ni la contraseña.
     """
+
+    from src.storage import file_exists, load_json
+
     config_path = get_config_path()
 
-    if not os.path.exists(config_path):
+    if not file_exists(config_path):
         return None
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return load_json(config_path)
 
 def ensure_rtsp_templates(config):
     """Add missing built-in RTSP templates and default profile references.
@@ -236,22 +240,43 @@ def load_config():
 
     return profile
 
+def remove_legacy_grid_settings(config):
+    """Remove grid state from config.json after it has been migrated."""
+    if not isinstance(config, dict):
+        raise ValueError("Invalid config.json structure")
+
+    changed = False
+    for key in ("LAST_GRID_SIZE", "GRID_MAPPINGS"):
+        if key in config:
+            del config[key]
+            changed = True
+
+    profiles = config.get("profiles", {})
+    if not isinstance(profiles, dict):
+        raise ValueError("Invalid profiles structure in config.json")
+
+    for profile in profiles.values():
+        if not isinstance(profile, dict):
+            continue
+        for key in ("LAST_GRID_SIZE", "GRID_MAPPINGS"):
+            if key in profile:
+                del profile[key]
+                changed = True
+
+    return changed
+
 def save_raw_config(config):
     """
-    Guarda directamente la estructura completa de configuración.
+    Guarda la estructura completa de configuración
+    mediante el sistema centralizado de almacenamiento.
     """
-    config_dir = get_config_dir()
-    config_path = get_config_path()
 
-    os.makedirs(config_dir, exist_ok=True)
+    from src.storage import ensure_config_dir, save_json
 
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(
-            config,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
+    config_dir = ensure_config_dir()
+    config_path = os.path.join(config_dir, "config.json")
+
+    save_json(config_path, config)
 
 def save_config(config):
     """
@@ -276,6 +301,10 @@ def save_config(config):
         return False
 
     config_to_save = config.copy()
+
+    # Grid state belongs to status.json, never to config.json.
+    config_to_save.pop("LAST_GRID_SIZE", None)
+    config_to_save.pop("GRID_MAPPINGS", None) 
 
     # Runtime-only values are resolved from the selected template and keyring.
     config_to_save.pop("RTSP_URL_TEMPLATE", None)
@@ -409,14 +438,7 @@ def get_default_profile():
         "NVR_IP": "",
         "NVR_PORT": "554",
         "TOTAL_CHANNELS": 16,
-        "LAST_GRID_SIZE": 2,
         "RTSP_TEMPLATE_ID": BUILTIN_RTSP_TEMPLATES[0]["id"],
-        "GRID_MAPPINGS": {
-            "1": ["Vacío"],
-            "2": ["Vacío", "Vacío", "Vacío", "Vacío"],
-            "3": ["Vacío"] * 9,
-            "4": ["Vacío"] * 16
-        }
     }
 
 def generate_profile_id(profile_name):

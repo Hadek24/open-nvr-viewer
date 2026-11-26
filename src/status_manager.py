@@ -1,13 +1,17 @@
-import json
 import os
 from copy import deepcopy
-from src.config import get_config_dir
+
+from src.storage import (
+    ensure_config_dir,
+    save_json,
+    load_json,
+    create_json_if_missing
+)
 
 class StatusManager:
 
     def __init__(self):
-        self.config_dir = get_config_dir()
-        os.makedirs(self.config_dir, exist_ok=True)
+        self.config_dir = ensure_config_dir()
 
         self.status_path = os.path.join(
             self.config_dir,
@@ -21,21 +25,22 @@ class StatusManager:
         Crea status.json si todavía no existe.
         """
 
-        if not os.path.exists(self.status_path):
-            initial_data = {
-                "version": 1,
-                "users": {}
-            }
+        initial_data = {
+            "version": 1,
+            "users": {}
+        }
 
-            self._save_data(initial_data)
+        create_json_if_missing(
+            self.status_path,
+            initial_data
+        )
 
     def load_status(self):
         """
         Carga y valida la estructura general de status.json.
         """
 
-        with open(self.status_path, "r", encoding="utf-8") as file:
-            data = json.load(file)
+        data = load_json(self.status_path)
 
         if not isinstance(data, dict):
             raise ValueError("Invalid status.json structure")
@@ -76,33 +81,11 @@ class StatusManager:
 
     def _save_data(self, data):
         """
-        Guarda status.json mediante escritura temporal.
+        Guarda status.json mediante el sistema centralizado
+        de almacenamiento.
         """
 
-        temporary_path = self.status_path + ".tmp"
-
-        try:
-            with open(
-                temporary_path,
-                "w",
-                encoding="utf-8"
-            ) as file:
-
-                json.dump(
-                    data,
-                    file,
-                    indent=4,
-                    ensure_ascii=False
-                )
-
-                file.flush()
-                os.fsync(file.fileno())
-
-            os.replace(temporary_path, self.status_path)
-
-        finally:
-            if os.path.exists(temporary_path):
-                os.remove(temporary_path)
+        save_json(self.status_path, data)
 
     def _default_profile_status(self):
         """
@@ -163,6 +146,89 @@ class StatusManager:
                 )
 
         return True
+
+    def migrate_legacy_grid_state(self, user_id, raw_config):
+        """Migrate legacy grid settings from config.json for one user.
+
+        Existing status entries always win. This makes the operation safe to
+        retry if writing status.json succeeds but cleaning config.json fails.
+        """
+        if not isinstance(raw_config, dict):
+            raise ValueError("Invalid config.json structure")
+
+        self._validate_identifiers(user_id, "migration-profile-check")
+
+        profiles = raw_config.get("profiles", {})
+        if not isinstance(profiles, dict):
+            raise ValueError("Invalid profiles structure in config.json")
+
+        profiles_to_migrate = {
+            profile_id: profile.copy()
+            for profile_id, profile in profiles.items()
+            if isinstance(profile_id, str) and isinstance(profile, dict)
+        }
+
+        # Support the old single-profile config format if it is encountered.
+        active_profile = raw_config.get("active_profile") or "nvr-principal"
+        if "LAST_GRID_SIZE" in raw_config or "GRID_MAPPINGS" in raw_config:
+            target = profiles_to_migrate.setdefault(active_profile, {})
+            target.setdefault("LAST_GRID_SIZE", raw_config.get("LAST_GRID_SIZE", 2))
+            target.setdefault("GRID_MAPPINGS", raw_config.get("GRID_MAPPINGS", {}))
+
+        data = self.load_status()
+        user_data = data["users"].setdefault(user_id, {"profiles": {}})
+        user_profiles = user_data.setdefault("profiles", {})
+        changed = False
+
+        for profile_id, legacy_profile in profiles_to_migrate.items():
+            has_legacy_state = (
+                "LAST_GRID_SIZE" in legacy_profile
+                or "GRID_MAPPINGS" in legacy_profile
+            )
+            if not has_legacy_state or profile_id in user_profiles:
+                continue
+
+            default_status = self._default_profile_status()
+            grid_size = legacy_profile.get("LAST_GRID_SIZE", 2)
+            if (
+                not isinstance(grid_size, int)
+                or isinstance(grid_size, bool)
+                or grid_size not in (1, 2, 3, 4)
+            ):
+                raise ValueError(
+                    f"Invalid legacy LAST_GRID_SIZE for profile: {profile_id}"
+                )
+
+            legacy_mappings = legacy_profile.get("GRID_MAPPINGS", {})
+            if not isinstance(legacy_mappings, dict):
+                raise ValueError(
+                    f"Invalid legacy GRID_MAPPINGS for profile: {profile_id}"
+                )
+
+            for size in ("1", "2", "3", "4"):
+                if size not in legacy_mappings:
+                    continue
+                mapping = legacy_mappings[size]
+                expected_slots = int(size) ** 2
+                if (
+                    not isinstance(mapping, list)
+                    or len(mapping) != expected_slots
+                    or not all(isinstance(channel, str) for channel in mapping)
+                ):
+                    raise ValueError(
+                        f"Invalid legacy grid mapping for profile {profile_id}, size {size}"
+                    )
+                default_status["grid_mappings"][size] = list(mapping)
+
+            default_status["last_grid_size"] = grid_size
+            self._validate_profile_status(default_status)
+            user_profiles[profile_id] = default_status
+            changed = True
+
+        if changed:
+            self._save_data(data)
+
+        return changed
 
     def get_profile_status(self, user_id, profile_id):
         """

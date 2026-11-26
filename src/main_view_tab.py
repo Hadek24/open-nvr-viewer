@@ -6,15 +6,22 @@ from PyQt6.QtWidgets import (
     QGridLayout,
 )
 
-from src.config import save_config
+from src.status_manager import StatusManager
 from src.main_view_tab_section.camera_widget import CameraWidget
 
 
 class MainViewTab(QWidget):
-    def __init__(self, config, parent=None):
+    def __init__(self, config, user_id, profile_id, parent=None):
         super().__init__(parent)
 
         self.config = config
+        self.user_id = user_id
+        self.profile_id = profile_id
+        self.status_manager = StatusManager()
+        self.profile_status = self.status_manager.get_profile_status(
+            self.user_id,
+            self.profile_id,
+        )
         self.cameras = []
         self.maximized_cam = None
 
@@ -33,7 +40,7 @@ class MainViewTab(QWidget):
             "Grilla 4x4",
         ])
 
-        initial_index = self.config.get("LAST_GRID_SIZE", 3) - 1
+        initial_index = self.profile_status["last_grid_size"] - 1
         self.grid_selector.setCurrentIndex(
             max(0, min(initial_index, 3))
         )
@@ -50,7 +57,7 @@ class MainViewTab(QWidget):
         self.grid_layout.setSpacing(2)
         self.main_layout.addLayout(self.grid_layout)
 
-        self.build_grid(self.config.get("LAST_GRID_SIZE", 3))
+        self.build_grid(self.profile_status["last_grid_size"])
 
     def save_current_mapping(self):
         current_size = self.grid_selector.currentText()
@@ -65,10 +72,12 @@ class MainViewTab(QWidget):
 
         mapping = [cam.current_channel for cam in self.cameras]
 
-        self.config["LAST_GRID_SIZE"] = size_num
-        self.config["GRID_MAPPINGS"][str(size_num)] = mapping
-
-        save_config(self.config)
+        self.status_manager.save_grid_state(
+            self.user_id,
+            self.profile_id,
+            size_num,
+            mapping,
+        )
 
     def build_grid(self, size):
         self.maximized_cam = None
@@ -78,9 +87,11 @@ class MainViewTab(QWidget):
 
         self.cameras.clear()
 
-        saved_mapping = self.config.get(
-            "GRID_MAPPINGS", {}
-        ).get(str(size), [])
+        saved_mapping = self.status_manager.get_grid_mapping(
+            self.user_id,
+            self.profile_id,
+            size,
+        )
 
         total_slots = size * size
 
