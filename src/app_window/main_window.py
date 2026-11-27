@@ -18,7 +18,7 @@ from src.main_view_tab import MainViewTab
 from src.configuration_tab import ConfigurationTab
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, session_user):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self._resize_edge = Qt.Edge(0)
@@ -27,36 +27,37 @@ class MainWindow(QMainWindow):
         QApplication.instance().installEventFilter(self)
         self.resize(1280, 720)
         self.setMinimumSize(800, 500)
-        self.config = load_config()
+        self.session_user = dict(session_user)
+        self.user_id = self.session_user["id"]
+        self.username = self.session_user["username"]
+        self.role = self.session_user["role"]
+
+        # Each non-Superadmin account uses its assigned NVR profile.
+        # Superadmin has no assigned profile by design, so it uses the
+        # globally selected profile when one is configured.
+        if self.role == "Superadmin":
+            self.profile_id = get_active_profile()
+        else:
+            self.profile_id = self.session_user.get("assigned_profile")
+
+        raw_config = load_raw_config()
+        profiles = raw_config.get("profiles", {}) if isinstance(raw_config, dict) else {}
+        if not self.profile_id or self.profile_id not in profiles:
+            self.profile_id = next(iter(profiles), None)
+
+        self.config = load_config(self.profile_id) if self.profile_id else None
         if self.config is None:
             self.config = get_default_profile()
             self.config["name"] = "--"
+            self.profile_id = self.profile_id or "nvr-principal"
 
-        # Transitional identity until the login/session flow is integrated:
-        # use the existing local account UUID rather than inventing another ID.
-        users = UserManager().list_users()
-        if not users:
-            raise RuntimeError(
-                "No local user exists. Create the initial user before starting the viewer."
-            )
-        enabled_users = [user for user in users if user["enabled"]]
-        selected_user = (enabled_users or users)[0]
-        self.user_id = selected_user["id"]
-
-        self.profile_id = get_active_profile() or "nvr-principal"
-
-        # Migrate every profile's legacy grid state before removing it from
-        # config.json. The migration is retry-safe: existing status entries win.
-        raw_config = load_raw_config()
+        # Migrate any remaining legacy grid settings for this authenticated UUID
+        # before removing them from config.json. Existing status entries win.
         if isinstance(raw_config, dict):
-            StatusManager().migrate_legacy_grid_state(
-                self.user_id,
-                raw_config,
-            )
+            StatusManager().migrate_legacy_grid_state(self.user_id, raw_config)
             if remove_legacy_grid_settings(raw_config):
                 save_raw_config(raw_config)
 
-        # Remove legacy fields from the in-memory profile as well.
         self.config.pop("LAST_GRID_SIZE", None)
         self.config.pop("GRID_MAPPINGS", None)
         self.central_widget = QWidget()
@@ -80,16 +81,27 @@ class MainWindow(QMainWindow):
         self.playback_view = QWidget() #Pestaña "Playback"
         self.tabs.addTab(self.playback_view, "Playback")
         self.playback_layout = QVBoxLayout(self.playback_view)
-        self.configuration_view = ConfigurationTab() #Pestaña "Configuration"
+        self.configuration_view = ConfigurationTab(self.user_id) #Pestaña "Configuration"
         self.tabs.addTab(self.configuration_view, "Configuration")
-        self.status_bar = StatusBar(self.config, self) #Barra de status
+        self.status_bar = StatusBar(self.config, self.username, self) #Barra de status
         self.main_layout.addWidget(self.status_bar)
 
         self.setStyleSheet(main_windows_style) #Encargando de insertar estilos a la APP
 
-    def closeEvent(self, event):
+    def logout(self):
+        """Stop the current session and return to the local login screen."""
+        from src.auth_dialogs import LoginDialog
+
         self.main_view.stop_all_streams()
-        event.accept()
+        self.hide()
+        dialog = LoginDialog(UserManager())
+        if dialog.exec():
+            replacement = MainWindow(dialog.session_user)
+            replacement.show()
+            self._replacement_window = replacement
+            self.close()
+        else:
+            QApplication.instance().quit()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

@@ -240,10 +240,11 @@ class UserDetailsDialog(QDialog):
 class LocalUsersSection(QWidget):
     """Graphical interface for managing local users."""
 
-    def __init__(self, parent=None):
+    def __init__(self, actor_id, parent=None):
         super().__init__(parent)
 
         # User manager
+        self.actor_id = actor_id
         self.user_manager = UserManager()
         self.users = []
 
@@ -435,17 +436,11 @@ class LocalUsersSection(QWidget):
             for user in stored_users:
                 assigned_profile = user["assigned_profile"]
 
-                profile_data = profiles.get(
-                    assigned_profile,
-                    {}
-                )
-
-                profile_name = profile_data.get(
-                    "name",
-                    assigned_profile
-                )
+                profile_data = profiles.get(assigned_profile, {}) if assigned_profile else {}
+                profile_name = profile_data.get("name", assigned_profile or "—")
 
                 self.users.append({
+                    "id": user["id"],
                     "username": user["username"],
                     "role": user["role"],
                     "profile": profile_name,
@@ -480,6 +475,14 @@ class LocalUsersSection(QWidget):
     def add_user(self):
         """Open the dialog to add a user."""
 
+        if not get_profiles():
+            QMessageBox.information(
+                self,
+                "NVR profile required",
+                "Create an NVR profile before adding local users.",
+            )
+            return
+
         dialog = UserDetailsDialog(parent=self)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -488,6 +491,7 @@ class LocalUsersSection(QWidget):
 
             try:
                 self.user_manager.add_user(
+                    actor_id=self.actor_id,
                     username=user["username"],
                     password=password,
                     role=user["role"],
@@ -497,7 +501,7 @@ class LocalUsersSection(QWidget):
 
                 self.load_users_from_manager()
 
-            except ValueError as error:
+            except (ValueError, PermissionError) as error:
                 QMessageBox.warning(
                     self,
                     "User Creation Error",
@@ -532,6 +536,7 @@ class LocalUsersSection(QWidget):
 
             try:
                 self.user_manager.edit_user(
+                    actor_id=self.actor_id,
                     username=current_user["username"],
                     new_username=updated_user["username"],
                     password=password,
@@ -542,7 +547,7 @@ class LocalUsersSection(QWidget):
 
                 self.load_users_from_manager()
 
-            except ValueError as error:
+            except (ValueError, PermissionError) as error:
                 QMessageBox.warning(
                     self,
                     "User Update Error",
@@ -577,10 +582,10 @@ class LocalUsersSection(QWidget):
 
         if confirmation == QMessageBox.StandardButton.Yes:
             try:
-                self.user_manager.delete_user(username)
+                self.user_manager.delete_user(self.actor_id, username)
                 self.load_users_from_manager()
 
-            except ValueError as error:
+            except (ValueError, PermissionError) as error:
                 QMessageBox.warning(
                     self,
                     "User Deletion Error",

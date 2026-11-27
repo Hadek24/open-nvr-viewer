@@ -5,7 +5,7 @@ import platform
 import subprocess
 
 class StatusBar(QWidget):
-    def __init__(self, config, parent=None):
+    def __init__(self, config, username, parent=None):
         super().__init__(parent)
 
         self.config = config
@@ -30,6 +30,10 @@ class StatusBar(QWidget):
         self.active_profile_label.setObjectName("active_profile_label")
         self.active_profile_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
+        self.active_user_label = QLabel(f"Active User: {username}")
+        self.active_user_label.setObjectName("active_profile_label")
+        self.active_user_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+
         self.resource_label = QLabel("CPU: --    RAM: --")
         self.resource_label.setObjectName("resource_label")
         self.resource_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -46,6 +50,7 @@ class StatusBar(QWidget):
         layout.addStretch()
 
         layout.addWidget(self.active_profile_label)
+        layout.addWidget(self.active_user_label)
 
         layout.addStretch()
 

@@ -42,6 +42,7 @@ class TitleBar(QWidget):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(4)
 
+        self.logout_button = QPushButton("Logout")
         self.minimize_button = QPushButton("−")
         self.maximize_button = QPushButton("□")
         self.close_button = QPushButton("×")
@@ -49,10 +50,15 @@ class TitleBar(QWidget):
         self.minimize_button.setObjectName("title_button")
         self.maximize_button.setObjectName("title_button")
         self.close_button.setObjectName("close_button")
+        self.logout_button.setObjectName("title_button")
+        self.logout_button.setFixedSize(64, 28)
+        self.logout_button.clicked.connect(self.parent_window.logout)
 
         self.minimize_button.clicked.connect(self.parent_window.showMinimized)
         self.maximize_button.clicked.connect(self.toggle_maximize)
         self.close_button.clicked.connect(self.parent_window.close)
+
+        buttons_layout.addWidget(self.logout_button)
 
         for button in (
             self.minimize_button,

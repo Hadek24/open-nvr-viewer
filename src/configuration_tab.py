@@ -48,8 +48,9 @@ class ConfigurationTab(QWidget):
     - Derecho: contenido de la sección seleccionada.
     """
 
-    def __init__(self):
+    def __init__(self, actor_id):
         super().__init__()
+        self.actor_id = actor_id
 
         # =============================================================
         # 1. Layout principal
@@ -122,7 +123,7 @@ class ConfigurationTab(QWidget):
         self.config_file_section = ConfigFileSection()
         self.profiles_section = ProfilesSection()
         self.rtsp_section = RTSPSection()
-        self.local_users_section = LocalUsersSection()
+        self.local_users_section = LocalUsersSection(self.actor_id)
         self.sections_stack.addWidget(self.config_file_section)
         self.sections_stack.addWidget(self.profiles_section)
         self.sections_stack.addWidget(self.rtsp_section)

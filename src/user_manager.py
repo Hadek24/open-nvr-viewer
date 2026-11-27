@@ -263,8 +263,18 @@ class UserManager:
             if user["role"] == "Superadmin"
         ]
 
-        # Debe existir exactamente un Superadmin.
-        if len(superadmins) != 1:
+        # Si todavía no existe Superadmin, se debe completar el alta inicial.
+        # Esto también cubre instalaciones anteriores que ya tenían
+        # Administrators creados antes de incorporar este rol.
+        if len(superadmins) == 0:
+            return {
+                "status": "bootstrap_required",
+                "administration_fully_provisioned": False
+            }
+
+        # Más de un Superadmin indica una inconsistencia que no se corrige
+        # automáticamente para evitar alterar cuentas privilegiadas.
+        if len(superadmins) > 1:
             return {
                 "status": "recovery_required",
                 "administration_fully_provisioned": False
@@ -294,6 +304,66 @@ class UserManager:
             "administration_fully_provisioned": bool(
                 enabled_administrators
             )
+        }
+
+    def create_initial_superadmin(self, username, password):
+        """Create the installation's first Superadmin without changing existing users."""
+        data = self.load_users()
+        users = data["users"]
+
+        if any(user.get("role") == "Superadmin" for user in users.values()):
+            raise ValueError("A Superadmin account already exists")
+
+        username = self._validate_username(username)
+        if not isinstance(password, str) or not password.strip():
+            raise ValueError("Password is required")
+        if len(password) < 8:
+            raise ValueError("Password must contain at least 8 characters")
+
+        if any(name.casefold() == username.casefold() for name in users):
+            raise ValueError("Username already exists")
+
+        users[username] = {
+            "id": str(uuid.uuid4()),
+            "password_hash": self.hash_password(password),
+            "role": "Superadmin",
+            "assigned_profile": None,
+            "enabled": True,
+        }
+        self._save_data(data)
+        return {
+            "id": users[username]["id"],
+            "username": username,
+            "role": "Superadmin",
+            "assigned_profile": None,
+            "enabled": True,
+        }
+
+    def authenticate(self, username, password):
+        """Authenticate a local account and return a safe session record."""
+        if not isinstance(username, str) or not isinstance(password, str):
+            return None
+
+        data = self.load_users()
+        match = next(
+            ((name, user) for name, user in data["users"].items()
+             if name.casefold() == username.strip().casefold()),
+            None,
+        )
+        if match is None:
+            return None
+
+        stored_username, user = match
+        if not user.get("enabled", False):
+            return None
+        if not self.verify_password(password, user.get("password_hash", "")):
+            return None
+
+        return {
+            "id": user["id"],
+            "username": stored_username,
+            "role": user["role"],
+            "assigned_profile": user["assigned_profile"],
         }
 
     def list_users(self):
@@ -733,6 +803,9 @@ class UserManager:
         self._save_data(data)
 
     def _validate_assigned_profile(self, assigned_profile):
+        if not isinstance(assigned_profile, str):
+            raise ValueError("Assigned profile is required")
+
         assigned_profile = assigned_profile.strip()
 
         if not assigned_profile:

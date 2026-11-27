@@ -192,7 +192,7 @@ def get_rtsp_templates():
     templates = config.get("rtsp_templates", [])
     return [item.copy() for item in templates if isinstance(item, dict)]
 
-def load_config():
+def load_config(profile_id=None):
     """
     Carga la configuración del perfil activo y agrega la contraseña
     obtenida desde el keyring.
@@ -212,11 +212,11 @@ def load_config():
     if ensure_rtsp_templates(config):
         save_raw_config(config)
 
-    active_profile = config.get("active_profile")
+    active_profile = profile_id or config.get("active_profile")
     profiles = config.get("profiles", {})
 
     if not active_profile or active_profile not in profiles:
-        print("Error: No hay un perfil activo configurado")
+        print("Error: No hay un perfil válido configurado para el usuario")
         return None
 
     profile = profiles[active_profile].copy()
